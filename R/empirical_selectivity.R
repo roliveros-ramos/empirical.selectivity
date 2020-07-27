@@ -1,10 +1,12 @@
 
 # Class empirical selectivity ---------------------------------------------
 
+#' @export
 empirical_selectivity = function(object, ...) {
   UseMethod("empirical_selectivity")
 }
 
+#' @export
 empirical_selectivity.default = function(object, ...) {
   # this function probably is gonna be used within SS_output
   # get the empirical selectivity for all fleets and all times,
@@ -39,6 +41,10 @@ empirical_selectivity.default = function(object, ...) {
 
 }
 
+#' @export
+empirical_selectivity.list = empirical_selectivity.default
+
+#' @export
 empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1) {
 
   if(is.null(fleet)) return(object)
@@ -55,6 +61,7 @@ empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, se
 
 # aggregation is done outside.
 
+#' @export
 weighted.mean.empirical_selectivity = function(x, w, ...) {
 
   if(any(is.na(w))) stop("NA in weights are not allowed.")
@@ -80,6 +87,7 @@ weighted.mean.empirical_selectivity = function(x, w, ...) {
 
 }
 
+#' @export
 weighted.mean.SS_empirical_selectivity = function(x, w, ...) {
 
   output = lapply(x, FUN=weighted.mean, w=w)
@@ -91,6 +99,7 @@ weighted.mean.SS_empirical_selectivity = function(x, w, ...) {
 
 # Methods
 
+#' @export
 '[.empirical_selectivity' = function(x, i, j, drop = FALSE) {
 
   attList = attributes(x)
@@ -100,6 +109,7 @@ weighted.mean.SS_empirical_selectivity = function(x, w, ...) {
   return(out)
 }
 
+#' @export
 plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5, w=1, ...) {
 
   if(nrow(x)==1) type = 1
@@ -112,6 +122,7 @@ plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5, w=1, ...) {
   return(invisible())
 }
 
+#' @export
 plot_TimexSize_type1 = function(x, col, p, ...) {
 
   z = x
@@ -120,7 +131,7 @@ plot_TimexSize_type1 = function(x, col, p, ...) {
 
   if(nrow(z)==1) {
     msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
-    plot(y, z, type="l", xlab="Time", ylab="Size (cm)", main=msg,
+    plot(y, z, type="l", xlab="Size (cm)",ylab="", main=msg,
          las=1, col=col,
          ...)
     return(invisible())
@@ -133,6 +144,7 @@ plot_TimexSize_type1 = function(x, col, p, ...) {
 
 }
 
+#' @export
 plot_TimexSize_type2 = function(x, col, w, alpha, ...) {
 
   if(missing(alpha)) alpha = min(3/nrow(x), 0.9)
@@ -142,7 +154,8 @@ plot_TimexSize_type2 = function(x, col, w, alpha, ...) {
   y = suppressWarnings(as.numeric(colnames(z)))
 
   plot.new()
-  plot.window(xlim=range(y), ylim=c(0,1), xlab="Time", ylab="Size (cm)")
+  plot.window(xlim=range(y), ylim=c(0,1))
+  title(xlab="Size (cm)")
   for(i in seq_len(nrow(z))) {
     lines(y, as.numeric(z[i,]), col=.makeTransparent(alpha, col))
   }
@@ -156,6 +169,7 @@ plot_TimexSize_type2 = function(x, col, w, alpha, ...) {
 }
 
 # model uses the SS code
+#' @export
 fit_selectivity = function(object, pattern = 27, ...) {
   # this function creates all the parameters (e.g. knots, values)
   # use a switch for every pattern
@@ -173,10 +187,12 @@ fit_selectivity = function(object, pattern = 27, ...) {
   return(output)
 }
 
+#' @export
 predict.selectivity_model = function(object, x, ...) {
   # use the internal function(size/age)
 }
 
+#' @export
 plot.selectivity_model = function(object, ...) {
   # standard plot function common to all methods
   plot(object$selectivity, ...)
@@ -187,6 +203,7 @@ plot.selectivity_model = function(object, ...) {
   return(invisible())
 }
 
+#' @export
 lines.selectivity_model = function(object, ...) {
   # standard plot function common to all methods
   if(nrow(object$selectivity)==1)
@@ -197,6 +214,7 @@ lines.selectivity_model = function(object, ...) {
 
 # For each pattern
 
+#' @export
 fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
 
   if(any(k<3)) {
@@ -247,6 +265,7 @@ fit_selectivity_24 = function(object, ...) {
 }
 
 
+#' @export
 SS_writeselec = function(object, file=NULL, phase=2, fix_bounds=TRUE, t=1, ...) {
   # write a selectivity_model object into lines for a ctl file.
   # can be printed in the console or to a file.
