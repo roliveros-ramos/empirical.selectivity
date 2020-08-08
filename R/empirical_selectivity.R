@@ -11,43 +11,29 @@ empirical_selectivity.default = function(object, ...) {
   # this function probably is gonna be used within SS_output
   # get the empirical selectivity for all fleets and all times,
 
-  lbins = object$lbins
-  years = seq(from=object$startyr, to=object$endyr, by=1)
+  # if already exists, use it
+  if(!is.null(object$empirical_selectivity) &
+     inherits(object$empirical_selectivity, "SS_empirical_selectivity"))
+    return(empirical_selectivity(object$empirical_selectivity, ...))
 
-  nlend = object$lendbase
-  natlen = object$natlen
-  natlen = natlen[natlen$'Beg/Mid'=="B" & natlen$Era=="TIME", ]
-  natlen = natlen[order(natlen$Yr), ]
-
-  nbase = expand.grid(Yr=years, Sex=c(1,2))
-  nbase = merge(nbase, natlen, all=TRUE)
-  nbase = nbase[order(nbase$Yr), ]
-
-  yr = sort(unique(natlen$Yr))
-  natlen_1 = natlen[natlen$Sex==1, -(1:12)]
-  natlen_2 = natlen[natlen$Sex==2, -(1:12)]
-
-  natlen = as.matrix(natlen_1) + as.matrix(natlen_2)
-  natlen = natlen[, as.character(lbins)]
-
-  xx = split(nlend, f = list(nlend$Fleet, nlend$Sex))
-  output = lapply(xx, FUN = .mta, bins=lbins, years=years, scale=natlen)
-
-  for(i in seq_along(output)) attr(output[[i]], "fleet") = object$FleetNames[i]
+  # if does not exist, create it (for older versions)
+  output = list(length = .getES(object, by="len", use="B"),
+                age    = .getES(object, by="age", use="B"))
 
   class(output) = "SS_empirical_selectivity"
 
-  return(output)
+  return(empirical_selectivity(output, ...))
 
 }
 
 #' @export
-empirical_selectivity.list = empirical_selectivity.default
+empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1, by="length") {
 
-#' @export
-empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1) {
+  by = match.arg(by, c("length", "age"))
 
   if(is.null(fleet)) return(object)
+
+  object = object[[by]]
 
   xcode = paste(fleet, sex, sep=".")
   check = xcode %in% names(object)
@@ -59,7 +45,15 @@ empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, se
 
 }
 
-# aggregation is done outside.
+#' @export
+empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length") {
+
+  return(empirical_selectivity(object$empirical_selectivity, fleet=fleet, sex=sex, by=by))
+
+}
+
+
+# Methods for empirical_selectivity ---------------------------------------
 
 #' @export
 weighted.mean.empirical_selectivity = function(x, w, ...) {
