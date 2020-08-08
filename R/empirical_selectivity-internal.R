@@ -1,6 +1,6 @@
 
 
-.mta = function(x, bins, years, var="Obs", FUN=mean, scale=1) {
+.mta = function(x, bins, years, var="Obs", FUN=mean, scale=1, by="length") {
 
   FUN = match.fun(FUN)
   out = matrix(0, nrow=length(years), ncol=length(bins))
@@ -22,7 +22,11 @@
   xmax[xmax==0] = 1
   out = out/xmax
 
-  names(dimnames(out)) = c("year", "size")
+  out[is.nan(out)] = 0
+
+  names(dimnames(out)) = c("year", by)
+
+  attr(out, "by") = by
 
   class(out) = c("empirical_selectivity", "SS_timexsize", "matrix")
 
@@ -71,3 +75,41 @@
   ind = sort(unique(ind))
   return(ind)
 }
+
+.getES = function(object, by="length", use="B") {
+
+  db  = sprintf("%sdbase", substr(by, 1, 3))
+  nat = sprintf("nat%s", substr(by, 1, 3))
+  years = seq(from=object$startyr, to=object$endyr, by=1)
+
+  naged  = object[[db]]
+  natage = object[[nat]]
+
+  natage = natage[natage$'Beg/Mid'==use & natage$Era=="TIME", ]
+  natage = natage[order(natage$Yr), ]
+
+  nbase = expand.grid(Yr=years, Sex=c(1,2))
+  nbase = merge(nbase, natage, all=TRUE)
+  nbase = nbase[order(nbase$Yr), ]
+
+  yr = sort(unique(natage$Yr))
+  natage_1 = natage[natage$Sex==1, -(1:12)]
+  natage_2 = natage[natage$Sex==2, -(1:12)]
+
+  natage = as.matrix(natage_1) + as.matrix(natage_2)
+
+  abins = sort(as.numeric(colnames(natage))) # use pop bins
+
+  natage = natage[, as.character(abins)]
+
+  output = lapply(split(naged, f = list(naged$Fleet, naged$Sex)),
+                  FUN = .mta, bins=abins, years=years, scale=natage, by=by)
+
+  for(i in seq_along(output))
+    attr(output[[i]], "fleet") = object$FleetNames[i]
+
+  return(output)
+
+}
+
+
