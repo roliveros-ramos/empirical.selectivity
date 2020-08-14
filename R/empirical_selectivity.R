@@ -7,7 +7,7 @@ empirical_selectivity = function(object, ...) {
 }
 
 #' @export
-empirical_selectivity.default = function(object, ...) {
+empirical_selectivity.default = function(object, thr=1e-5, ...) {
   # this function probably is gonna be used within SS_output
   # get the empirical selectivity for all fleets and all times,
 
@@ -17,8 +17,10 @@ empirical_selectivity.default = function(object, ...) {
     return(empirical_selectivity(object$empirical_selectivity, ...))
 
   # if does not exist, create it (for older versions)
-  output = list(length = .getES(object, by="len", use="B"),
-                age    = .getES(object, by="age", use="B"))
+  output = list(length = .getES(object, by="length", use="B", thr=thr),
+                age    = .getES(object, by="age", use="B", thr=thr))
+
+  output = unlist(output, recursive = FALSE)
 
   class(output) = "SS_empirical_selectivity"
 
@@ -33,17 +35,16 @@ empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, se
 
   if(is.null(fleet)) return(object)
 
-  object = object[[by]]
-
-  xcode = paste(fleet, sex, sep=".")
+  xcode = paste(by, fleet, sex, sep=".")
   check = xcode %in% names(object)
-  msg = sprintf("Empirical selectivity for fleet %s and sex %d is not available",
-                fleet, sex)
+  msg = sprintf("Empirical selectivity by %s for fleet %s and sex %d is not available",
+                by, fleet, sex)
   if(!check) stop(msg)
 
   return(object[[xcode]])
 
 }
+
 
 #' @export
 empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length") {
@@ -58,6 +59,12 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 #' @export
 weighted.mean.empirical_selectivity = function(x, w, ...) {
 
+  if(is.character(w)) {
+    w = match.arg(w, c("catch", "Neff", "Nsamp", "equal"))
+    lab = sprintf("%s (%s weighted)", attr(x, "fleet"), w)
+    w = if(w=="equal") 1 else attr(x, "weights")[, w]
+  } else lab = attr(x, "fleet")
+
   if(any(is.na(w))) stop("NA in weights are not allowed.")
 
   N = nrow(x)
@@ -69,12 +76,14 @@ weighted.mean.empirical_selectivity = function(x, w, ...) {
   w = w/sum(w) # weigths normalized to sum 1.
 
   output = colSums(x*w)
-  output = output/max(output) # max to 1.
+  output = output/max(output, na.rm=TRUE) # max to 1.
   output = matrix(output, nrow=1)
   colnames(output) = colnames(x)
-  rownames(output) = attr(x, "fleet")
+  rownames(output) = lab
 
   attr(output, "fleet") = attr(x, "fleet")
+  attr(output, "by") = attr(x, "by")
+  attr(output, "model") = attr(x, "model")
 
   class(output) = c("empirical_selectivity", "SS_timexsize", "matrix")
   return(output)
@@ -94,30 +103,96 @@ weighted.mean.SS_empirical_selectivity = function(x, w, ...) {
 # Methods
 
 #' @export
-'[.empirical_selectivity' = function(x, i, j, drop = FALSE) {
+'[.empirical_selectivity' = function(x, i, j, yr, age, length, drop = FALSE) {
 
   attList = attributes(x)
   class(x) =  "matrix"
+
+  if(!missing(yr)) {
+    years = suppressWarnings(as.numeric(rownames(x)))
+    if(all(is.na(years))) stop("No year data is available for indexing.")
+    i = na.omit(match(yr, years))
+  }
+
+  if(!missing(age)) {
+    if(attr(x, "by")!="age") stop("No age data is available for indexing.")
+    ages = suppressWarnings(as.numeric(colnames(x)))
+    # extract ages withing the range
+    j = which(ages >= min(age, na.rm=TRUE) & ages <= max(age, na.rm=TRUE))
+  }
+
+  if(!missing(length)) {
+    if(attr(x, "by")!="length") stop("No length data is available for indexing.")
+    lengths = suppressWarnings(as.numeric(colnames(x)))
+    # extract lengths withing the range
+    j = which(lengths >= min(length, na.rm=TRUE) & lengths <= max(length, na.rm=TRUE))
+  }
+
   out = '['(x, i, j, drop=drop)
   class(out) = c("empirical_selectivity", "SS_timexsize", "matrix")
+
+  attr(out, "by") = attList$by
+  attr(out, "fleet") = attList$fleet
+  attr(out, "model") = attList$model
+  if(!is.null(attList$weights)) attr(out, "weights") = attList$weights[i,]
+
   return(out)
 }
 
 #' @export
-plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5, w=1, ...) {
+plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5,
+                                      xlim=NULL, ylim=NULL, ...) {
 
-  if(nrow(x)==1) type = 1
+  if(nrow(x)==1) type = 2
+
+  units = if(attr(x, "by")=="length") "cm" else "years"
+  lab = sprintf(if(attr(x, "by")=="length") "Size (%s)" else "Age (%s)", units)
 
   switch (type,
-    "1" = plot_TimexSize_type1(x=x, col=col, p=p, ...),
-    "2" = plot_TimexSize_type2(x=x, col=col, w=w, ...))
-
+    "1" = plot_TimexSize_type1(x=x, col=col, lab=lab, xlim=xlim, ylim=ylim, ...),
+    "2" = plot_TimexSize_type2(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...))
 
   return(invisible())
 }
 
+
 #' @export
-plot_TimexSize_type1 = function(x, col, p, ...) {
+plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
+
+  if(missing(alpha)) alpha = max(min(3/nrow(x), 0.9), 0.1)
+
+  z = x
+  x = suppressWarnings(as.numeric(rownames(z)))
+  y = suppressWarnings(as.numeric(colnames(z)))
+
+  if(is.null(xlim)) xlim = range(y)
+  if(is.null(ylim)) ylim = c(0,1)
+
+  plot.new()
+  plot.window(xlim=xlim, ylim=ylim)
+  title(xlab=lab, main=attr(z, "fleet"))
+  for(i in seq_len(nrow(z))) {
+    lines(y, as.numeric(z[i,]), col=.makeTransparent(alpha, col))
+  }
+  lines(y, weighted.mean(z, w="catch"), lwd=2, col="black", lty=3)
+  lines(y, weighted.mean(z, w="Nsamp"), lwd=2, col="red", lty=1)
+  lines(y, weighted.mean(z, w="Neff"), lwd=2, col="red", lty=3)
+  lines(y, weighted.mean(z, w="equal"), lwd=2, col=col, lty=1)
+  lines(attr(z, "model"), lwd=3, col="black", lty=1)
+  axis(1)
+  axis(2, las=1)
+  box()
+
+  legend("topleft", c("catch", "N (sample)", "N (effective)", "equal", "model"),
+         col=c(1,2,2,col,1), lty=c(3,1,3,1,1), lwd=c(2,2,2,2,3), bty="n")
+
+  return(invisible())
+
+}
+
+
+#' @export
+plot_TimexSize_type2 = function(x, col, p, lab, xlim, ylim, ...) {
 
   z = x
   x = suppressWarnings(as.numeric(rownames(z)))
@@ -125,39 +200,14 @@ plot_TimexSize_type1 = function(x, col, p, ...) {
 
   if(nrow(z)==1) {
     msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
-    plot(y, z, type="l", xlab="Size (cm)",ylab="", main=msg,
-         las=1, col=col,
-         ...)
+    plot(y, z, type="l", xlab=lab, ylab="", main=msg,
+         las=1, col=col, xlim=xlim, ylim=ylim, ...)
     return(invisible())
   }
 
   col = directionalPalette(col=col, p=p)
-  image.plot(x, y, z, xlab="Time", ylab="Size (cm)", las=1, col=col,
-             ...)
-  return(invisible())
-
-}
-
-#' @export
-plot_TimexSize_type2 = function(x, col, w, alpha, ...) {
-
-  if(missing(alpha)) alpha = min(3/nrow(x), 0.9)
-  zz = weighted.mean(x, w=w)
-  z = x
-  x = suppressWarnings(as.numeric(rownames(z)))
-  y = suppressWarnings(as.numeric(colnames(z)))
-
-  plot.new()
-  plot.window(xlim=range(y), ylim=c(0,1))
-  title(xlab="Size (cm)")
-  for(i in seq_len(nrow(z))) {
-    lines(y, as.numeric(z[i,]), col=.makeTransparent(alpha, col))
-  }
-  lines(y, zz, lwd=2, col=col)
-  axis(1)
-  axis(2, las=1)
-  box()
-
+  image.plot(x, y, z, xlab="Time", ylab=lab, las=1, col=col,
+             xlim=xlim, ylim=ylim, ...)
   return(invisible())
 
 }
