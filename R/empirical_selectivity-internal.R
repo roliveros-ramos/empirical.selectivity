@@ -7,6 +7,9 @@
   rownames(out) = years
   colnames(out) = bins
 
+  msg = sprintf("Variable %s not found.", var)
+  if(!(var %in% names(x))) stop(msg)
+
   xout  = tapply(X = x[, var], INDEX=list(x$Yr, x[, bin.name]), FUN=FUN)
 
   obins = as.numeric(colnames(xout))
@@ -108,11 +111,14 @@
   naged  = object[[db]]
   natage = object[[nat]]
 
+  nsamp = c("Nsamp_adj", "Nsamp_in", "Nsamp", "N")
+  nsamp = nsamp[ min(which(nsamp %in% names(naged)))]
+
   # fill and zeros
   w_catch = .mta(object$catch, bins=seq_along(object$FleetNames),
                  years=years, var="Obs", FUN=mean, by="fleet", normalize=FALSE, bin.name = "Fleet")
   w_nsamp = .mta(naged, bins=seq_along(object$FleetNames),
-                 years=years, var="N", FUN=mean, by="fleet", normalize=FALSE, bin.name = "Fleet")
+                 years=years, var=nsamp, FUN=mean, by="fleet", normalize=FALSE, bin.name = "Fleet")
   w_effN  = .mta(naged, bins=seq_along(object$FleetNames),
                  years=years, var="effN", FUN=mean, by="fleet", normalize=FALSE, bin.name = "Fleet")
 
@@ -120,6 +126,8 @@
 
   popbin = as.numeric(colnames(natage)[-(1:12)])
   fshbin = if(by=="age") object$agebins else object$lbins
+
+  if(all(is.na(fshbin))) fshbin = popbin
 
   bins = .checkBins(fshbin = fshbin, popbin = popbin)
 
