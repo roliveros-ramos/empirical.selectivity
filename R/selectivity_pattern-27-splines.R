@@ -8,7 +8,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
   }
 
   # main function to be applied to 'empirical_selectivity' object
-  .fit_selectivity_27 = function(x, y, k, thr, span) {
+  .fit_selectivity_27 = function(x, y, k, thr, span, ...) {
     # knots, values, derivatives at extremes
     # create a list of model parameters
     x = as.numeric(x)
@@ -34,7 +34,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
 
   for(i in seq_len(nrow(object))) {
     cat("year =",i, "\n")
-    tmp = .fit_selectivity_27(x=x, y=object[i, ], k=k, thr=thr, span=span)
+    tmp = .fit_selectivity_27(x=x, y=object[i, ], k=k, thr=thr, span=span, ...)
     out[[i]] = tmp$model
     xo[i, ]  = tmp$fitted
   }
@@ -43,3 +43,25 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
 
   return(output)
 }
+
+
+# Internal functions ------------------------------------------------------
+
+.nonNullPoints = function(y, thr, span) {
+  # copy y
+
+  if(length(span)==1) span = c(span, span)
+  if(any(span<0)) stop("span must be positive.")
+
+  yx = cumsum(y)/sum(y)
+
+  ind0 = which.min(yx<thr/2)
+  ind1 = which.max(yx>=(1-thr/2))
+
+  ind = c(ind0, ind1)
+  ind = seq(from=ind[1]-span[1], to=ind[2]+span[2], by=1)
+  ind = pmin(pmax(ind, 1), length(y))
+  ind = sort(unique(ind))
+  return(ind)
+}
+
