@@ -150,7 +150,9 @@ plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5,
 
   switch (type,
     "1" = plot_TimexSize_type1(x=x, col=col, lab=lab, xlim=xlim, ylim=ylim, ...),
-    "2" = plot_TimexSize_type2(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...))
+    "2" = plot_TimexSize_type2(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...),
+    "3" = plot_TimexSize_type3(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...),
+    stop("Invalid plot type."))
 
   return(invisible())
 }
@@ -165,7 +167,7 @@ plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
   x = suppressWarnings(as.numeric(rownames(z)))
   y = suppressWarnings(as.numeric(colnames(z)))
 
-  if(is.null(xlim)) xlim = range(y)
+  if(is.null(xlim)) xlim = range(y, na.rm=TRUE)
   if(is.null(ylim)) ylim = c(0,1)
 
   plot.new()
@@ -206,8 +208,38 @@ plot_TimexSize_type2 = function(x, col, p, lab, xlim, ylim, ...) {
   }
 
   col = directionalPalette(col=col, p=p)
-  image.plot(x, y, z, xlab="Time", ylab=lab, las=1, col=col,
+  if(is.null(xlim)) xlim = range(x, na.rm=TRUE)
+  if(is.null(ylim)) ylim = range(y, na.rm=TRUE)
+
+  image.plot(x, y, as.matrix(z), xlab="Time", ylab=lab, las=1, col=col,
              xlim=xlim, ylim=ylim, ...)
+  return(invisible())
+
+}
+
+#' @export
+plot_TimexSize_type3 = function(x, col, p, lab, xlim, ylim, ...) {
+
+  z = x
+  x = suppressWarnings(as.numeric(rownames(z)))
+  y = suppressWarnings(as.numeric(colnames(z)))
+
+  if(nrow(z)==1) {
+    msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
+    plot(y, z, type="l", xlab=lab, ylab="", main=msg,
+         las=1, col=col, xlim=xlim, ylim=ylim, ...)
+    return(invisible())
+  }
+
+  col = directionalPalette(col=col, p=p)
+  if(is.null(xlim)) xlim = range(x, na.rm=TRUE)
+  if(is.null(ylim)) ylim = range(y, na.rm=TRUE)
+
+  z = as.matrix(z)
+  z[is.na(z)] = 0
+
+  mountains(xvec=y, yvec=x, zmat=z, xlab=lab, ylab="Time", las=1, col=col,
+            ...)
   return(invisible())
 
 }
@@ -258,55 +290,7 @@ lines.selectivity_model = function(object, ...) {
 
 # For each pattern
 
-#' @export
-fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
 
-  if(any(k<3)) {
-    k = pmax(k, 3)
-    warning("k must be greater or equal to 3, setting to 3.")
-  }
-
-  # main function to be applied to 'empirical_selectivity' object
-  .fit_selectivity_27 = function(x, y, k, thr, span) {
-    # knots, values, derivatives at extremes
-    # create a list of model parameters
-    x = as.numeric(x)
-    y = as.numeric(y)
-    if(all(y==0)) {
-      output = list(fitted=y, model=NULL)
-      return(output)
-    }
-    ind = .nonNullPoints(y, thr=thr, span=span)
-    x0 = x[ind]
-    y0 = y[ind]
-    mod = fks(x0, log(y0), k = k-2, degree=3, prec=0)
-    pred = predict(mod, newdata = data.frame(x=x), type="response")
-    pred = exp(pred - max(pred, na.rm=TRUE))
-    output = list(fitted=pred, x=x, y=y, model=mod)
-    return(output)
-  }
-
-  x = as.numeric(colnames(object))
-
-  xo = object*0
-  out = vector("list", nrow(object))
-
-  for(i in seq_len(nrow(object))) {
-    cat("year =",i, "\n")
-    tmp = .fit_selectivity_27(x=x, y=object[i, ], k=k, thr=thr, span=span)
-    out[[i]] = tmp$model
-    xo[i, ]  = tmp$fitted
-  }
-
-  output = list(selectivity=xo, models=out, y=object, x=x)
-
-  return(output)
-}
-
-fit_selectivity_24 = function(object, ...) {
-  # create a list of model parameters
-  return(output)
-}
 
 
 #' @export
