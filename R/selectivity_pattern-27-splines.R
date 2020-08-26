@@ -69,6 +69,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, ...) {
 }
 
 
+#' @export
 .SS_writeselec_27 = function(object, file=NULL, phase=2, fix_bounds=TRUE, t=1, ...) {
   # write a selectivity_model object into lines for a ctl file.
   # can be printed in the console or to a file.

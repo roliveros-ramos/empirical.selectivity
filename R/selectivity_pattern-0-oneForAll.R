@@ -29,8 +29,8 @@ fit_selectivity_0 = function(object, pattern, ...) {
     this = out[[best_model[i]]]
     xo[i, ] = as.numeric(this$selectivity[i, ])
     output[[i]] = this$models[[i]]
-    best_pattern[i] = this$pattern
-    message(names(best_model)[i], ": ", this$pattern)
+    best_pattern[i] = this$pattern[i]
+    message(names(best_model)[i], ": ", this$pattern[i])
   }
 
   names(best_pattern) = names(best_model)

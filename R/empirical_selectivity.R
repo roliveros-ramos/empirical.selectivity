@@ -219,7 +219,7 @@ split.empirical_selectivity = function (x, f, breaks, drop = FALSE, sep = ".",
 #' @param ...
 #'
 #' @export
-fit_selectivity = function(object, pattern = 27, blocks=NULL, breaks=NULL,
+fit_selectivity = function(object, pattern = 27, blocks=NULL,
                            w=NULL, method=NULL, ...) {
   # this function creates all the parameters (e.g. knots, values)
   # use a switch for every pattern
@@ -227,6 +227,13 @@ fit_selectivity = function(object, pattern = 27, blocks=NULL, breaks=NULL,
     stop("Object to fit must be of class 'empirical_selectivity'.")
 
   if(is.null(method)) method = "equal"
+
+  if(is.null(blocks)) breaks = NULL
+  if(length(blocks)>1) {
+    breaks = blocks
+    blocks = length(breaks) - 1
+  } else breaks = NULL
+  if(blocks==0) blocks = NULL
 
   if(is.null(breaks) & is.null(blocks) & !is.null(w))
     object = weighted.mean(object, w=w)
