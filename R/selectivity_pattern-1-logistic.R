@@ -1,5 +1,4 @@
 
-#' @export
 fit_selectivity_1 = function(object, ...) {
   # create a list of model parameters
 

@@ -1,6 +1,5 @@
 
-#' @export
-fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
+fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, ...) {
 
   if(any(k<3)) {
     k = pmax(k, 3)
@@ -8,13 +7,13 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
   }
 
   # main function to be applied to 'empirical_selectivity' object
-  .fit_selectivity_27 = function(x, y, k, thr, span, ...) {
+  .fit_selectivity_27 = function(x, y, k, thr, span, tiny=1e-4) {
     # knots, values, derivatives at extremes
     # create a list of model parameters
     x = as.numeric(x)
     y = as.numeric(y)
-    if(all(y==0)) {
-      output = list(fitted=y, model=NULL)
+    if(all(na.omit(y)==0)) {
+      output = list(fitted=y, x=x, y=y, model=NULL)
       return(output)
     }
     ind = .nonNullPoints(y, thr=thr, span=span)
@@ -53,6 +52,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
   if(length(span)==1) span = c(span, span)
   if(any(span<0)) stop("span must be positive.")
 
+  y[is.na(y)] = 0
   yx = cumsum(y)/sum(y)
 
   ind0 = which.min(yx<thr/2)
