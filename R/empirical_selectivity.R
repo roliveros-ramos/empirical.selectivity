@@ -253,6 +253,7 @@ fit_selectivity = function(object, pattern = 27, ...) {
     stop("Object to fit must be of class 'empirical_selectivity'.")
 
   output = switch(as.character(pattern),
+     '1' = fit_selectivity_1(object, ...),
     '24' = fit_selectivity_24(object, ...),
     '27' = fit_selectivity_27(object, ...),
     stop(sprintf("Selectivity pattern %s not implemented.", pattern)))
@@ -288,69 +289,14 @@ lines.selectivity_model = function(object, ...) {
   return(invisible())
 }
 
-# For each pattern
-
-
-
-
 #' @export
-SS_writeselec = function(object, file=NULL, phase=2, fix_bounds=TRUE, t=1, ...) {
-  # write a selectivity_model object into lines for a ctl file.
-  # can be printed in the console or to a file.
+SS_writeselec = function(object, file=NULL, phase=2, t=1, ...) {
 
-  if(nrow(object$selectivity)>1)
-    message("Using parameters of year", rownames(object$selectivity)[t])
-
-  knots = object$models[[t]]$knots
-  n = nrow(knots)
-  m = min(object$x)
-  M = max(object$x)
-
-  fleet_nm = attr(object, "fleet")
-
-  fixed = median(seq_len(n))
-  if(fix_bounds) fixed = sort(unique(c(1, fixed, n)))
-  fixed = fixed + 3 + n
-  names = c("#_", "LO", "HI", "INIT", "PRIOR", "PR_SD", "PR_type", "PHASE", "env-var",
-            "use_dev", "dev_mnyr", "dev_mxyr", "dev_PH", "Block", "Blk_Fxn", "# parm_name")
-
-
-  lo   = c(0, -0.01, -1.00, rep(m, n), rep(-9, n))
-  hi   = c(0, +1.00, +0.01, rep(M, n), rep(+7, n))
-  init = c(0, knots$deriv[1], tail(knots$deriv,1),
-           knots$knots, knots$value)
-  init = pmax(pmin(init, hi), lo)
-  init = round(init, 3)
-  prior = c(0, 0, 0, knots$knots, rep(0, n))
-  prior_sd = c(0, 1e-3, 1e-3, rep(0, n), rep(1, n))
-  prior_ty = c(0, 1, 1, rep(0, n), rep(1, n))
-
-  PHASE = c(-99, rep(phase+1, 2), rep(-99, n), rep(phase, n))
-
-  PHASE[fixed] = -PHASE[fixed]
-
-  env_var  = use_dev = dev_mnyr = dev_mxyr = 0
-  dev_PH = 0.5
-  Block = Blk_fxn = 0
-
-  knot_nm = sprintf("# SizeSpline_Knot_%d_%%s(1)", seq_len(n))
-  valu_nm = sprintf("# SizeSpline_Val_%d_%%s(1)", seq_len(n))
-
-  nm = sprintf(c("# SizeSpline_Code_%s(1)", "# SizeSpline_GradLo_%s(1)",
-                 "# SizeSpline_GradHi_%s(1)", knot_nm, valu_nm), fleet_nm)
-
-
-  out = cbind("", lo, hi, init, prior, prior_sd, prior_ty, PHASE,
-              env_var, use_dev, dev_mnyr, dev_mxyr, dev_PH, Block, Blk_fxn, nm)
-
-  ofile = sprintf("spline_%s.ctl", fleet_nm)
-
-  cat(sprintf("# %s Length Selex\n", fleet_nm), file=ofile)
-  write(t(out), ncolumns = ncol(out), file=ofile, sep="\t", append = TRUE)
-
+  FUN = match.fun(sprintf(".SS_writeselec_%d", object$pattern))
+  out = FUN(object, file=file, phase=phase, t=t, ...)
   return(invisible(out))
 
-}
+  }
 
 
 SS_run = function(...) {
