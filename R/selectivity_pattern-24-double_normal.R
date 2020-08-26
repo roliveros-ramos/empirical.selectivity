@@ -10,6 +10,7 @@ fit_selectivity_24 = function(object, ...) {
     y = as.numeric(y)
     par = .doubleNorm24_guess(x, y)
     mod = optim(par, fn=.doubleNorm24_fit, x=x, y=y, method="L-BFGS-B")
+    mod$guess = par
     pred = .doubleNorm24(x, mod$par)
 
     output = list(fitted=pred, x=x, y=y, model=mod)
@@ -28,7 +29,7 @@ fit_selectivity_24 = function(object, ...) {
     xo[i, ]  = tmp$fitted
   }
 
-  output = list(selectivity=xo, models=out, y=object, x=x)
+  output = list(selectivity=xo, models=out, y=object, x=x, pattern=24)
 
   return(output)
 }
@@ -108,3 +109,50 @@ fit_selectivity_24 = function(object, ...) {
 }
 
 
+.SS_writeselec_24 = function(object, file=NULL, phase=2, t=1, ...) {
+  # write a selectivity_model object into lines for a ctl file.
+  # can be printed in the console or to a file.
+
+  if(nrow(object$selectivity)>1)
+    message("Using parameters of year", rownames(object$selectivity)[t])
+
+  n = 6
+  m = min(object$x)
+  M = max(object$x)
+
+  fleet_nm = attr(object, "fleet")
+
+  names = c("#_", "LO", "HI", "INIT", "PRIOR", "PR_SD", "PR_type", "PHASE", "env-var",
+            "use_dev", "dev_mnyr", "dev_mxyr", "dev_PH", "Block", "Blk_Fxn", "# parm_name")
+
+  lo   = c(m, rep(-15, n-1))
+  hi   = c(M, rep(+15, n-1))
+  init = object$models[[t]]$par
+  init = pmax(pmin(init, hi), lo)
+  init = round(init, 3)
+  prior = c(round(0.5*(m+M)), rep(0, n-1))
+  prior_sd = round(c(sqrt(((M-m)^2)/12), rep(0, n-1)))
+  prior_ty = rep(0, n)
+
+  PHASE = c(phase-1, rep(phase+1, 3), -rep(phase-1, 2))
+
+  env_var  = use_dev = dev_mnyr = dev_mxyr = 0
+  dev_PH = 0.5
+  Block = Blk_fxn = 0
+
+  nm = c("#  Size_DblN_peak_%s(1)", "#  Size_DblN_top_logit_%s(1)",
+         "#  Size_DblN_ascend_se_%s(1)", "#  Size_DblN_descend_se_%s(1)",
+         "#  Size_DblN_start_logit_%s(1)", "#  Size_DblN_end_logit_%s(1)")
+  nm = sprintf(nm, fleet_nm)
+
+  out = cbind("", lo, hi, init, prior, prior_sd, prior_ty, PHASE,
+              env_var, use_dev, dev_mnyr, dev_mxyr, dev_PH, Block, Blk_fxn, nm)
+
+  ofile = sprintf("%s_doubleNormal.ctl", fleet_nm)
+
+  cat(sprintf("# %s Length Selex\n", fleet_nm), file=ofile)
+  write(t(out), ncolumns = ncol(out), file=ofile, sep="\t", append = TRUE)
+
+  return(invisible(out))
+
+}

@@ -39,7 +39,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
     xo[i, ]  = tmp$fitted
   }
 
-  output = list(selectivity=xo, models=out, y=object, x=x)
+  output = list(selectivity=xo, models=out, y=object, x=x, pattern=27)
 
   return(output)
 }
@@ -65,3 +65,61 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=3, ...) {
   return(ind)
 }
 
+
+.SS_writeselec_27 = function(object, file=NULL, phase=2, fix_bounds=TRUE, t=1, ...) {
+  # write a selectivity_model object into lines for a ctl file.
+  # can be printed in the console or to a file.
+
+  if(nrow(object$selectivity)>1)
+    message("Using parameters of year", rownames(object$selectivity)[t])
+
+  knots = object$models[[t]]$knots
+  n = nrow(knots)
+  m = min(object$x)
+  M = max(object$x)
+
+  fleet_nm = attr(object, "fleet")
+
+  fixed = median(seq_len(n))
+  if(fix_bounds) fixed = sort(unique(c(1, fixed, n)))
+  fixed = fixed + 3 + n
+  names = c("#_", "LO", "HI", "INIT", "PRIOR", "PR_SD", "PR_type", "PHASE", "env-var",
+            "use_dev", "dev_mnyr", "dev_mxyr", "dev_PH", "Block", "Blk_Fxn", "# parm_name")
+
+
+  lo   = c(0, -0.01, -1.00, rep(m, n), rep(-9, n))
+  hi   = c(0, +1.00, +0.01, rep(M, n), rep(+7, n))
+  init = c(0, knots$deriv[1], tail(knots$deriv,1),
+           knots$knots, knots$value)
+  init = pmax(pmin(init, hi), lo)
+  init = round(init, 3)
+  prior = c(0, 0, 0, knots$knots, rep(0, n))
+  prior_sd = c(0, 1e-3, 1e-3, rep(0, n), rep(1, n))
+  prior_ty = c(0, 1, 1, rep(0, n), rep(1, n))
+
+  PHASE = c(-99, rep(phase+1, 2), rep(-99, n), rep(phase, n))
+
+  PHASE[fixed] = -PHASE[fixed]
+
+  env_var  = use_dev = dev_mnyr = dev_mxyr = 0
+  dev_PH = 0.5
+  Block = Blk_fxn = 0
+
+  knot_nm = sprintf("# SizeSpline_Knot_%d_%%s(1)", seq_len(n))
+  valu_nm = sprintf("# SizeSpline_Val_%d_%%s(1)", seq_len(n))
+
+  nm = sprintf(c("# SizeSpline_Code_%s(1)", "# SizeSpline_GradLo_%s(1)",
+                 "# SizeSpline_GradHi_%s(1)", knot_nm, valu_nm), fleet_nm)
+
+
+  out = cbind("", lo, hi, init, prior, prior_sd, prior_ty, PHASE,
+              env_var, use_dev, dev_mnyr, dev_mxyr, dev_PH, Block, Blk_fxn, nm)
+
+  ofile = sprintf("%s_spline.ctl", fleet_nm)
+
+  cat(sprintf("# %s Length Selex\n", fleet_nm), file=ofile)
+  write(t(out), ncolumns = ncol(out), file=ofile, sep="\t", append = TRUE)
+
+  return(invisible(out))
+
+}
