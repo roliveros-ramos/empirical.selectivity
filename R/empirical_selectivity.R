@@ -220,11 +220,13 @@ split.empirical_selectivity = function (x, f, breaks, drop = FALSE, sep = ".",
 #'
 #' @export
 fit_selectivity = function(object, pattern = 27, blocks=NULL, breaks=NULL,
-                           w=NULL, ...) {
+                           w=NULL, method=NULL, ...) {
   # this function creates all the parameters (e.g. knots, values)
   # use a switch for every pattern
   if(!inherits(object, "empirical_selectivity"))
     stop("Object to fit must be of class 'empirical_selectivity'.")
+
+  if(is.null(method)) method = "equal"
 
   if(is.null(breaks) & is.null(blocks) & !is.null(w))
     object = weighted.mean(object, w=w)
@@ -232,10 +234,16 @@ fit_selectivity = function(object, pattern = 27, blocks=NULL, breaks=NULL,
   if(!is.null(breaks) & is.null(blocks)) blocks = length(breaks) - 1
 
   if(!is.null(blocks)) {
-    if(is.null(breaks)) breaks = .getBlockBreaks(object, n=blocks)
+    if(is.null(breaks)) {
+      # equal is hardcoded temporarily
+      breaks = .getBlockBreaks(object, n=blocks, method="equal")
+    }
+    if(method=="optim") breaks = .optimBlocks(object, breaks, w)
+
     if(length(breaks)!=(blocks+1))
       stop(sprintf("Incorrect number of breaks, %d were expected.", blocks+1))
 
+    # create new object for fitting using blocks
     object = split(object, breaks=breaks)
     if(is.null(w)) stop("Weighting 'w' must be specified")
     object = weighted.mean(object, w=w)
@@ -248,7 +256,15 @@ fit_selectivity = function(object, pattern = 27, blocks=NULL, breaks=NULL,
 
   }
 
+  if(identical(as.integer(pattern), 0L)) patts = c(1, 24, 27)
+
+  if(length(pattern)>1) {
+    patts = pattern
+    pattern = 0
+  }
+
   output = switch(as.character(pattern),
+     '0' = fit_selectivity_0(object, pattern=patts, ...),
      '1' = fit_selectivity_1(object, ...),
     '24' = fit_selectivity_24(object, ...),
     '27' = fit_selectivity_27(object, ...),
@@ -282,7 +298,7 @@ predict.selectivity_model = function(object, x, ...) {
 #' @export
 SS_writeselec = function(object, file=NULL, phase=2, t=1, ...) {
 
-  FUN = match.fun(sprintf(".SS_writeselec_%d", object$pattern))
+  FUN = match.fun(sprintf(".SS_writeselec_%d", object$pattern[t]))
   out = FUN(object, file=file, phase=phase, t=t, ...)
   return(invisible(out))
 
