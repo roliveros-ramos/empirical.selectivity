@@ -21,14 +21,17 @@ fit_selectivity_24 = function(object, ...) {
   xo = object*0
   out = vector("list", nrow(object))
 
+  labs = sprintf("year = %s", rownames(object))
+  if(nrow(object)==1) labs = rownames(object)
+
   for(i in seq_len(nrow(object))) {
-    cat("year =",i, "\n")
+    message("Fitting ", labs[i], "\n")
     tmp = .fit_selectivity_24(x=x, y=object[i, ], ...)
     out[[i]] = tmp$model
     xo[i, ]  = tmp$fitted
   }
 
-  output = list(selectivity=xo, models=out, y=object, x=x, pattern=24)
+  output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(24, nrow(xo)))
 
   return(output)
 }
