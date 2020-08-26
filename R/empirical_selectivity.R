@@ -1,11 +1,20 @@
 
 # Class empirical selectivity ---------------------------------------------
 
+#' Title
+#' @param object
+#' @param fleet
+#' @param sex
+#' @param by
+#'
+#' @param ...
+#'
 #' @export
 empirical_selectivity = function(object, ...) {
   UseMethod("empirical_selectivity")
 }
 
+#' @describeIn empirical_selectivity
 #' @export
 empirical_selectivity.default = function(object, thr=1e-5, ...) {
   # this function probably is gonna be used within SS_output
@@ -28,6 +37,7 @@ empirical_selectivity.default = function(object, thr=1e-5, ...) {
 
 }
 
+#' @describeIn empirical_selectivity
 #' @export
 empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1, by="length") {
 
@@ -45,7 +55,7 @@ empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, se
 
 }
 
-
+#' @describeIn empirical_selectivity
 #' @export
 empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length") {
 
@@ -56,6 +66,12 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 
 # Methods for empirical_selectivity ---------------------------------------
 
+#' Title
+#' @param x
+#'
+#' @param w
+#' @param ...
+#'
 #' @export
 weighted.mean.empirical_selectivity = function(x, w, ...) {
 
@@ -99,9 +115,27 @@ weighted.mean.SS_empirical_selectivity = function(x, w, ...) {
 
 }
 
+#' @export
+weighted.mean.list = function(x, w, ...) {
 
-# Methods
+  output = lapply(x, FUN=weighted.mean, w=w)
+  return(output)
 
+}
+
+
+# Methods -----------------------------------------------------------------
+
+#' Title
+#' @param x
+#'
+#' @param i
+#' @param j
+#' @param yr
+#' @param age
+#' @param length
+#' @param drop
+#'
 #' @export
 '[.empirical_selectivity' = function(x, i, j, yr, age, length, drop = FALSE) {
 
@@ -139,118 +173,80 @@ weighted.mean.SS_empirical_selectivity = function(x, w, ...) {
   return(out)
 }
 
+
+#' Title
+#' @param x
+#'
+#' @param f
+#' @param breaks
+#' @param drop
+#' @param sep
+#' @param lex.order
+#' @param ...
+#'
 #' @export
-plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5,
-                                      xlim=NULL, ylim=NULL, ...) {
+split.empirical_selectivity = function (x, f, breaks, drop = FALSE, sep = ".",
+                                        lex.order = FALSE, ...) {
 
-  if(nrow(x)==1) type = 2
-
-  units = if(attr(x, "by")=="length") "cm" else "years"
-  lab = sprintf(if(attr(x, "by")=="length") "Size (%s)" else "Age (%s)", units)
-
-  switch (type,
-    "1" = plot_TimexSize_type1(x=x, col=col, lab=lab, xlim=xlim, ylim=ylim, ...),
-    "2" = plot_TimexSize_type2(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...),
-    "3" = plot_TimexSize_type3(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...),
-    stop("Invalid plot type."))
-
-  return(invisible())
-}
-
-
-#' @export
-plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
-
-  if(missing(alpha)) alpha = max(min(3/nrow(x), 0.9), 0.1)
-
-  z = x
-  x = suppressWarnings(as.numeric(rownames(z)))
-  y = suppressWarnings(as.numeric(colnames(z)))
-
-  if(is.null(xlim)) xlim = range(y, na.rm=TRUE)
-  if(is.null(ylim)) ylim = c(0,1)
-
-  plot.new()
-  plot.window(xlim=xlim, ylim=ylim)
-  title(xlab=lab, main=attr(z, "fleet"))
-  for(i in seq_len(nrow(z))) {
-    lines(y, as.numeric(z[i,]), col=.makeTransparent(alpha, col))
-  }
-  lines(y, weighted.mean(z, w="catch"), lwd=2, col="black", lty=3)
-  lines(y, weighted.mean(z, w="Nsamp"), lwd=2, col="red", lty=1)
-  lines(y, weighted.mean(z, w="Neff"), lwd=2, col="red", lty=3)
-  lines(y, weighted.mean(z, w="equal"), lwd=2, col=col, lty=1)
-  lines(attr(z, "model"), lwd=3, col="black", lty=1)
-  axis(1)
-  axis(2, las=1)
-  box()
-
-  legend("topleft", c("catch", "N (sample)", "N (effective)", "equal", "model"),
-         col=c(1,2,2,col,1), lty=c(3,1,3,1,1), lwd=c(2,2,2,2,3), bty="n")
-
-  return(invisible())
-
-}
-
-
-#' @export
-plot_TimexSize_type2 = function(x, col, p, lab, xlim, ylim, ...) {
-
-  z = x
-  x = suppressWarnings(as.numeric(rownames(z)))
-  y = suppressWarnings(as.numeric(colnames(z)))
-
-  if(nrow(z)==1) {
-    msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
-    plot(y, z, type="l", xlab=lab, ylab="", main=msg,
-         las=1, col=col, xlim=xlim, ylim=ylim, ...)
-    return(invisible())
+  if(!missing(breaks)) {
+    if(is.null(attr(x, "weights")))
+      stop("No time dimension available for computing blocks.")
+    yr = attr(x, "weights")$year
+    f = cut(yr, breaks = breaks, right=FALSE, include.lowest = TRUE)
   }
 
-  col = directionalPalette(col=col, p=p)
-  if(is.null(xlim)) xlim = range(x, na.rm=TRUE)
-  if(is.null(ylim)) ylim = range(y, na.rm=TRUE)
-
-  image.plot(x, y, as.matrix(z), xlab="Time", ylab=lab, las=1, col=col,
-             xlim=xlim, ylim=ylim, ...)
-  return(invisible())
-
-}
-
-#' @export
-plot_TimexSize_type3 = function(x, col, p, lab, xlim, ylim, ...) {
-
-  z = x
-  x = suppressWarnings(as.numeric(rownames(z)))
-  y = suppressWarnings(as.numeric(colnames(z)))
-
-  if(nrow(z)==1) {
-    msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
-    plot(y, z, type="l", xlab=lab, ylab="", main=msg,
-         las=1, col=col, xlim=xlim, ylim=ylim, ...)
-    return(invisible())
-  }
-
-  col = directionalPalette(col=col, p=p)
-  if(is.null(xlim)) xlim = range(x, na.rm=TRUE)
-  if(is.null(ylim)) ylim = range(y, na.rm=TRUE)
-
-  z = as.matrix(z)
-  z[is.na(z)] = 0
-
-  mountains(xvec=y, yvec=x, zmat=z, xlab=lab, ylab="Time", las=1, col=col,
-            ...)
-  return(invisible())
+  if (is.list(f))
+    f = interaction(f, drop = drop, sep = sep, lex.order = lex.order)
+  else if(!is.factor(f))
+    f = as.factor(f)
+  else if(drop)
+    f = factor(f)
+  storage.mode(f) <- "integer"
+  ind = .Internal(split(seq_len(nrow(x)), f))
+  out = lapply(ind, function(i) x[i])
+  return(out)
 
 }
 
-# model uses the SS code
+
+#' Title
+#' @param object
+#'
+#' @param pattern
+#' @param blocks
+#' @param breaks
+#' @param w
+#' @param ...
+#'
 #' @export
-fit_selectivity = function(object, pattern = 27, ...) {
+fit_selectivity = function(object, pattern = 27, blocks=NULL, breaks=NULL,
+                           w=NULL, ...) {
   # this function creates all the parameters (e.g. knots, values)
   # use a switch for every pattern
   if(!inherits(object, "empirical_selectivity"))
     stop("Object to fit must be of class 'empirical_selectivity'.")
+
+  if(is.null(breaks) & is.null(blocks) & !is.null(w))
+    object = weighted.mean(object, w=w)
+
+  if(!is.null(breaks) & is.null(blocks)) blocks = length(breaks) - 1
+
+  if(!is.null(blocks)) {
+    if(is.null(breaks)) breaks = .getBlockBreaks(object, n=blocks)
+    if(length(breaks)!=(blocks+1))
+      stop(sprintf("Incorrect number of breaks, %d were expected.", blocks+1))
+
+    object = split(object, breaks=breaks)
+    if(is.null(w)) stop("Weighting 'w' must be specified")
+    object = weighted.mean(object, w=w)
+    att = attributes(object[[1]])
+    nm = names(object)
+    object = do.call(rbind, object)
+    att$dim = dim(object)
+    att$dimnames[[1]] = nm
+    attributes(object) = att
+
+  }
 
   output = switch(as.character(pattern),
      '1' = fit_selectivity_1(object, ...),
@@ -264,31 +260,25 @@ fit_selectivity = function(object, pattern = 27, ...) {
   return(output)
 }
 
+#' Title
+#' @param object
+#'
+#' @param x
+#' @param ...
+#'
 #' @export
 predict.selectivity_model = function(object, x, ...) {
   # use the internal function(size/age)
 }
 
-#' @export
-plot.selectivity_model = function(object, ...) {
-  # standard plot function common to all methods
-  plot(object$selectivity, ...)
-  if(nrow(object$selectivity)==1) {
-    points(object$x,object$y, pch=19, cex=0.5)
-    abline(v=object$models[[1]]$knots$knots, lty=3, col="red")
-  }
-  return(invisible())
-}
-
-#' @export
-lines.selectivity_model = function(object, ...) {
-  # standard plot function common to all methods
-  if(nrow(object$selectivity)==1)
-    lines(object$x, as.numeric(object$selectivity),
-          ...)
-  return(invisible())
-}
-
+#' Title
+#' @param object
+#'
+#' @param file
+#' @param phase
+#' @param t
+#' @param ...
+#'
 #' @export
 SS_writeselec = function(object, file=NULL, phase=2, t=1, ...) {
 
@@ -299,6 +289,14 @@ SS_writeselec = function(object, file=NULL, phase=2, t=1, ...) {
   }
 
 
+#' Title
+#'
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
 SS_run = function(...) {
 
 }
