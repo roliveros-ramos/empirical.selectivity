@@ -178,7 +178,8 @@ summary.selectivity_model = function(object, ...) {
   nblock  = nrow(object$fit)
   nmodels = ncol(object$fit)
 
-  .tab = function(i, object) rbind(fit=object$fit[i, ], npar=object$npar[i, ])
+  .tab = function(i, object) rbind(fit=object$fit[i,  ,drop=FALSE],
+                                   npar=object$npar[i, , drop=FALSE])
 
   out = lapply(seq_len(nblock), FUN = .tab, object=object)
 
