@@ -4,8 +4,8 @@ library(mgcv)
 library(fks)
 library(r4ss.selectivity)
 
-remotes::install_github("roliveros-ramos/fks")
-remotes::install_github("roliveros-ramos/r4ss.selectivity")
+# remotes::install_github("roliveros-ramos/fks")
+# remotes::install_github("roliveros-ramos/r4ss.selectivity")
 
 # Computing Empirical Selectivity -----------------------------------------
 
@@ -29,14 +29,18 @@ dat = weighted.mean(es2, w="catch")
 plot(dat)
 # the number k includes the 2 external knots, k=5 would be
 # equivalent to k=3 in the freeknotspline package
+ss_01 = fit_selectivity(dat, pattern=1)
+ss_24 = fit_selectivity(dat, pattern=24)
 ss_27 = fit_selectivity(dat, pattern=27, k=5)
 ss_27a = fit_selectivity(dat, pattern=27, k=5, control=list(optimizer="golden"))
-ss_24 = fit_selectivity(dat, pattern=24)
-ss_01 = fit_selectivity(dat, pattern=1)
 
-lines(ss_27, col="red", lwd=2)
-lines(ss_24, col="black", lwd=2)
 lines(ss_01, col="green", lwd=2)
+lines(ss_24, col="black", lwd=2)
+lines(ss_27, col="red", lwd=2)
+
+summary(ss_01)
+summary(ss_24)
+summary(ss_27)
 
 # Using blocks
 
@@ -44,19 +48,23 @@ lines(ss_01, col="green", lwd=2)
 ss_block0 = fit_selectivity(es2, pattern=24, blocks=c(17, 61, 180),
                             w="catch")
 plot(ss_block0)
+summary(ss_block0)
 
 # equidistant split of time in n blocks
 ss_block1 = fit_selectivity(es2, pattern=24, blocks = 3, w="catch")
 plot(ss_block1)
+summary(ss_block1)
 
 # Fitting multiple models (i.e. selectivity patterns)
 ss_mult = fit_selectivity(es2, pattern=c(1, 24, 27), blocks=3, k=5, w="catch")
 plot(ss_mult)
+summary(ss_mult)
 
 # optimization of blocks positions (method="optim")
 # if block positions are provided, are used as start search point
 ss_block2 = fit_selectivity(es2, pattern=24, blocks = 4, w="catch", method="optim")
 plot(ss_block2)
+summary(ss_block2)
 
 # write the config for the ctl file
 SS_writeselec(ss_01)
