@@ -12,7 +12,7 @@ fit_selectivity_1 = function(object, ...) {
     mod$guess = par
     pred = .logistic1(x, mod$par)
 
-    output = list(fitted=pred, x=x, y=y, model=mod)
+    output = list(fitted=pred, x=x, y=y, model=mod, npar=2)
     return(output)
   }
 
@@ -20,6 +20,7 @@ fit_selectivity_1 = function(object, ...) {
 
   xo = object*0
   out = vector("list", nrow(object))
+  npar = vector("integer", nrow(object))
 
   labs = sprintf("year = %s", rownames(object))
   if(nrow(object)==1) labs = rownames(object)
@@ -29,9 +30,13 @@ fit_selectivity_1 = function(object, ...) {
     tmp = .fit_selectivity_1(x=x, y=object[i, ], ...)
     out[[i]] = tmp$model
     xo[i, ]  = tmp$fitted
+    npar[i]  = tmp$npar
   }
 
-  output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(1, nrow(xo)))
+  fit = .compare_fit(xo, object)
+
+  output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(1, nrow(xo)),
+                fit=fit, npar=npar)
 
   return(output)
 }

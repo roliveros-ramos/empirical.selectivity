@@ -1,13 +1,17 @@
 
-fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, ...) {
+fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), ...) {
 
   if(any(k<3)) {
     k = pmax(k, 3)
     warning("k must be greater or equal to 3, setting to 3.")
   }
 
+  if(is.null(control$optimizer)) control$optimizer = "genetic"
+
+  control$optimizer = match.arg(control$optimizer, c("genetic", "golden"))
+
   # main function to be applied to 'empirical_selectivity' object
-  .fit_selectivity_27 = function(x, y, k, thr, span, tiny=1e-4) {
+  .fit_selectivity_27 = function(x, y, k, thr, span, tiny=1e-4, search="genetic") {
     # knots, values, derivatives at extremes
     # create a list of model parameters
     x = as.numeric(x)
@@ -19,10 +23,10 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, ...) {
     ind = .nonNullPoints(y, thr=thr, span=span)
     x0 = x[ind]
     y0 = y[ind]
-    mod = suppressMessages(fks(x0, log(y0), k = k-2, degree=3, prec=0))
+    mod = suppressMessages(fks(x0, log(y0), k = k-2, degree=3, prec=0, search=search))
     pred = predict(mod, newdata = data.frame(x=x), type="response")
     pred = exp(pred - max(pred, na.rm=TRUE))
-    output = list(fitted=pred, x=x, y=y, model=mod)
+    output = list(fitted=pred, x=x, y=y, model=mod, npar=2*nrow(mod$knots)+2)
     return(output)
   }
 
@@ -30,18 +34,24 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, ...) {
 
   xo = object*0
   out = vector("list", nrow(object))
+  npar = vector("integer", nrow(object))
 
   labs = sprintf("year = %s", rownames(object))
   if(nrow(object)==1) labs = rownames(object)
 
   for(i in seq_len(nrow(object))) {
     message("Fitting ", labs[i], "\n")
-    tmp = .fit_selectivity_27(x=x, y=object[i, ], k=k, thr=thr, span=span, ...)
+    tmp = .fit_selectivity_27(x=x, y=object[i, ], k=k, thr=thr,
+                              span=span, search=control$optimizer, ...)
     out[[i]] = tmp$model
     xo[i, ]  = tmp$fitted
+    npar[i]  = tmp$npar
   }
 
-  output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(27, nrow(xo)))
+  fit = .compare_fit(xo, object)
+
+  output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(27, nrow(xo)),
+                fit=fit, npar=npar)
 
   return(output)
 }
