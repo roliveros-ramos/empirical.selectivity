@@ -1,7 +1,7 @@
 
 #' @export
 plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5,
-                                      xlim=NULL, ylim=NULL, ...) {
+                                      xlim=NULL, ylim=NULL, main=NULL, ...) {
 
   if(nrow(x)==1) type = 2
 
@@ -9,38 +9,17 @@ plot.empirical_selectivity = function(x, type=1, col="blue", p=1.5,
   lab = sprintf(if(attr(x, "by")=="length") "Size (%s)" else "Age (%s)", units)
 
   switch (type,
-          "1" = plot_TimexSize_type1(x=x, col=col, lab=lab, xlim=xlim, ylim=ylim, ...),
-          "2" = plot_TimexSize_type2(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...),
-          "3" = plot_TimexSize_type3(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, ...),
+          "1" = plot_TimexSize_type1(x=x, col=col, lab=lab, xlim=xlim, ylim=ylim, main=main, ...),
+          "2" = plot_TimexSize_type2(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, main=main, ...),
+          "3" = plot_TimexSize_type3(x=x, col=col, p=p, lab=lab, xlim=xlim, ylim=ylim, main=main, ...),
           stop("Invalid plot type."))
 
   return(invisible())
 }
 
-#' @export
-plot.selectivity_model = function(object, ...) {
-  # standard plot function common to all methods
-  plot(object$selectivity, ...)
-  if(nrow(object$selectivity)==1) {
-  points(object$x,object$y, pch=19, cex=0.5)
-    if(object$pattern==27)
-      abline(v=object$models[[1]]$knots$knots, lty=3, col="red")
-  }
-  return(invisible())
-}
-
-#' @export
-lines.selectivity_model = function(object, ...) {
-  # standard plot function common to all methods
-  if(nrow(object$selectivity)==1)
-    lines(object$x, as.numeric(object$selectivity),
-          ...)
-  return(invisible())
-}
-
 # Internal ----------------------------------------------------------------
 
-plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
+plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, main, ...) {
 
   if(missing(alpha)) alpha = max(min(3/nrow(x), 0.9), 0.1)
 
@@ -53,7 +32,7 @@ plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
 
   plot.new()
   plot.window(xlim=xlim, ylim=ylim)
-  title(xlab=lab, main=attr(z, "fleet"))
+  title(xlab=lab, main=ifelse(is.null(main), attr(z, "fleet"), main))
 
   if(!is.null(attr(z, "weights"))) {
     cols = rep(.makeTransparent(alpha, col), nrow(z))
@@ -79,7 +58,9 @@ plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
            col=c(1, cols), lty=1, lwd=c(3, rep(1, nrow(z))), bty="n")
 
   }
-  lines(attr(z, "model"), lwd=3, col="black", lty=1)
+  mod = attr(z, "model")
+  mod$y = colMeans(mod$y)
+  lines(mod, lwd=3, col="black", lty=1)
   axis(1)
   axis(2, las=1)
   box()
@@ -89,15 +70,16 @@ plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, ...) {
 }
 
 
-plot_TimexSize_type2 = function(x, col, p, lab, xlim, ylim, ...) {
+plot_TimexSize_type2 = function(x, col, p, lab, xlim, ylim, main, ...) {
 
   z = x
   x = suppressWarnings(as.numeric(rownames(z)))
   y = suppressWarnings(as.numeric(colnames(z)))
 
   if(nrow(z)==1) {
-    msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
-    plot(y, z, type="l", xlab=lab, ylab="", main=msg,
+    if(is.null(main))
+      main = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
+    plot(y, z, type="l", xlab=lab, ylab="", main=main,
          las=1, col=col, xlim=xlim, ylim=ylim, ...)
     return(invisible())
   }
@@ -112,15 +94,16 @@ plot_TimexSize_type2 = function(x, col, p, lab, xlim, ylim, ...) {
 
 }
 
-plot_TimexSize_type3 = function(x, col, p, lab, xlim, ylim, ...) {
+plot_TimexSize_type3 = function(x, col, p, lab, xlim, ylim, main, ...) {
 
   z = x
   x = suppressWarnings(as.numeric(rownames(z)))
   y = suppressWarnings(as.numeric(colnames(z)))
 
   if(nrow(z)==1) {
-    msg = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
-    plot(y, z, type="l", xlab=lab, ylab="", main=msg,
+    if(is.null(main))
+      main = if(is.na(x)) rownames(z) else sprintf("year = %d", x)
+    plot(y, z, type="l", xlab=lab, ylab="", main=main,
          las=1, col=col, xlim=xlim, ylim=ylim, ...)
     return(invisible())
   }
@@ -134,6 +117,7 @@ plot_TimexSize_type3 = function(x, col, p, lab, xlim, ylim, ...) {
 
   mountains(xvec=y, yvec=x, zmat=z, xlab=lab, ylab="Time", las=1, col=col,
             ...)
+
   return(invisible())
 
 }
