@@ -99,7 +99,9 @@ weighted.mean.empirical_selectivity = function(x, w, ...) {
 
   attr(output, "fleet") = attr(x, "fleet")
   attr(output, "by") = attr(x, "by")
-  attr(output, "model") = attr(x, "model")
+  xmod = attr(x, "model")
+  xmod$y = matrix(colSums(w*xmod$y), nrow=1)
+  attr(output, "model") = xmod
 
   class(output) = c("empirical_selectivity", "SS_timexsize", "matrix")
   return(output)
@@ -167,6 +169,10 @@ weighted.mean.list = function(x, w, ...) {
 
   attr(out, "by") = attList$by
   attr(out, "fleet") = attList$fleet
+
+  attList$model$y = attList$model$y[i, ]
+  attList$model$years = attList$model$years[i]
+
   attr(out, "model") = attList$model
   if(!is.null(attList$weights)) attr(out, "weights") = attList$weights[i,]
 
@@ -201,126 +207,11 @@ split.empirical_selectivity = function (x, f, breaks, drop = FALSE, sep = ".",
     f = as.factor(f)
   else if(drop)
     f = factor(f)
-  storage.mode(f) <- "integer"
+  storage.mode(f) = "integer"
   ind = .Internal(split(seq_len(nrow(x)), f))
   out = lapply(ind, function(i) x[i])
   return(out)
 
 }
 
-
-#' Title
-#' @param object
-#'
-#' @param pattern
-#' @param blocks
-#' @param breaks
-#' @param w
-#' @param ...
-#'
-#' @export
-fit_selectivity = function(object, pattern = 27, blocks=NULL,
-                           w=NULL, method=NULL, ...) {
-  # this function creates all the parameters (e.g. knots, values)
-  # use a switch for every pattern
-  if(!inherits(object, "empirical_selectivity"))
-    stop("Object to fit must be of class 'empirical_selectivity'.")
-
-  if(is.null(method)) method = "equal"
-
-  if(is.null(blocks)) breaks = NULL
-  if(length(blocks)>1) {
-    breaks = blocks
-    blocks = length(breaks) - 1
-  } else breaks = NULL
-  if(blocks==0) blocks = NULL
-
-  if(is.null(breaks) & is.null(blocks) & !is.null(w))
-    object = weighted.mean(object, w=w)
-
-  if(!is.null(breaks) & is.null(blocks)) blocks = length(breaks) - 1
-
-  if(!is.null(blocks)) {
-    if(is.null(breaks)) {
-      # equal is hardcoded temporarily
-      breaks = .getBlockBreaks(object, n=blocks, method="equal")
-    }
-    if(method=="optim") breaks = .optimBlocks(object, breaks, w)
-
-    if(length(breaks)!=(blocks+1))
-      stop(sprintf("Incorrect number of breaks, %d were expected.", blocks+1))
-
-    # create new object for fitting using blocks
-    object = split(object, breaks=breaks)
-    if(is.null(w)) stop("Weighting 'w' must be specified")
-    object = weighted.mean(object, w=w)
-    att = attributes(object[[1]])
-    nm = names(object)
-    object = do.call(rbind, object)
-    att$dim = dim(object)
-    att$dimnames[[1]] = nm
-    attributes(object) = att
-
-  }
-
-  if(identical(as.integer(pattern), 0L)) patts = c(1, 24, 27)
-
-  if(length(pattern)>1) {
-    patts = pattern
-    pattern = 0
-  }
-
-  output = switch(as.character(pattern),
-     '0' = fit_selectivity_0(object, pattern=patts, ...),
-     '1' = fit_selectivity_1(object, ...),
-    '24' = fit_selectivity_24(object, ...),
-    '27' = fit_selectivity_27(object, ...),
-    stop(sprintf("Selectivity pattern %s not implemented.", pattern)))
-
-  attr(output, "fleet") = attr(object, "fleet")
-  # output includes a function to predict.
-  class(output) = "selectivity_model"
-  return(output)
-}
-
-#' Title
-#' @param object
-#'
-#' @param x
-#' @param ...
-#'
-#' @export
-predict.selectivity_model = function(object, x, ...) {
-  # use the internal function(size/age)
-}
-
-#' Title
-#' @param object
-#'
-#' @param file
-#' @param phase
-#' @param t
-#' @param ...
-#'
-#' @export
-SS_writeselec = function(object, file=NULL, phase=2, t=1, ...) {
-
-  FUN = match.fun(sprintf(".SS_writeselec_%d", object$pattern[t]))
-  out = FUN(object, file=file, phase=phase, t=t, ...)
-  return(invisible(out))
-
-  }
-
-
-#' Title
-#'
-#' @param ...
-#'
-#' @return
-#' @export
-#'
-#' @examples
-SS_run = function(...) {
-
-}
 
