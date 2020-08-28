@@ -55,7 +55,7 @@ plot(ss_mult)
 
 # optimization of blocks positions (method="optim")
 # if block positions are provided, are used as start search point
-ss_block2 = fit_selectivity(es2, pattern=24, blocks = 3, w="catch", method="optim")
+ss_block2 = fit_selectivity(es2, pattern=24, blocks = 4, w="catch", method="optim")
 plot(ss_block2)
 
 # write the config for the ctl file
