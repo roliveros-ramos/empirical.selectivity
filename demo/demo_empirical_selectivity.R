@@ -4,6 +4,8 @@ library(mgcv)
 library(fks)
 library(r4ss.selectivity)
 
+remotes::install_github("roliveros-ramos/fks")
+remotes::install_github("roliveros-ramos/r4ss.selectivity")
 
 # Computing Empirical Selectivity -----------------------------------------
 
@@ -25,9 +27,10 @@ plot(es2)
 # One block
 dat = weighted.mean(es2, w="catch")
 plot(dat)
-# the number k includes the 2 external nodes, k=5 would be
+# the number k includes the 2 external knots, k=5 would be
 # equivalent to k=3 in the freeknotspline package
 ss_27 = fit_selectivity(dat, pattern=27, k=5)
+ss_27a = fit_selectivity(dat, pattern=27, k=5, control=list(optimizer="golden"))
 ss_24 = fit_selectivity(dat, pattern=24)
 ss_01 = fit_selectivity(dat, pattern=1)
 
@@ -38,7 +41,7 @@ lines(ss_01, col="green", lwd=2)
 # Using blocks
 
 # User defined blocks
-ss_block0 = fit_selectivity(es2, pattern=24, blocks=c(17, 100, 130, 180),
+ss_block0 = fit_selectivity(es2, pattern=24, blocks=c(17, 61, 180),
                             w="catch")
 plot(ss_block0)
 
@@ -48,6 +51,7 @@ plot(ss_block1)
 
 # Fitting multiple models (i.e. selectivity patterns)
 ss_mult = fit_selectivity(es2, pattern=c(1, 24, 27), blocks=3, k=5, w="catch")
+plot(ss_mult)
 
 # optimization of blocks positions (method="optim")
 # if block positions are provided, are used as start search point
@@ -60,4 +64,9 @@ SS_writeselec(ss_24)
 SS_writeselec(ss_27)
 SS_writeselec(ss_mult, t=1) # config for block 1
 SS_writeselec(ss_block0, t=3) # config for block 3
+
+x = 1:100
+y = cumsum(runif(100))
+
+mod = fks(x=x, y=y, k=5)
 
