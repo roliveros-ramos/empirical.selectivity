@@ -162,39 +162,25 @@
 .getSelex = function(object, fleet, sex=1, by="length") {
 
   obj = if(by=="length") object$sizeselex else object$ageselex
-  var = if(by=="length") "Lsel" else c("Asel", "Asel2")
+  Asel = ifelse("Asel" %in% names(table(object$ageselex$Factor)), "Asel", "Asel2")
+  var = if(by=="length") "Lsel" else Asel
   n = if(by=="length") 5 else 7
 
-  tt = obj[obj$Factor %in% var & obj$Fleet %in% fleet & obj$Sex %in% sex, -(1:n)]
-  tt = tt[nrow(tt), ,drop=FALSE]
+  tt = obj[obj$Factor %in% var & obj$Fleet %in% fleet & obj$Sex %in% sex, ]
+  syr = tt$Yr
+  years = seq(from=object$startyr, to=object$endyr, by=1)
 
-  out = list(x=as.numeric(colnames(tt)),
-             y=as.numeric(tt))
+  tt = cbind(Yrf=cut(syr, breaks=syr, right = FALSE, include.lowest = TRUE), tt[, -(1:n)])
+
+  db = data.frame(Yr=years, Yrf=cut(years, breaks=syr, right = FALSE, include.lowest = TRUE))
+
+  db = merge(db, tt, sort=FALSE, all.y=TRUE)
+  db = db[!is.na(db$Yr), , drop=FALSE]
+  db = db[order(db$Yr), -c(1,2), drop=FALSE]
+
+  out = list(x=as.numeric(colnames(db)), y=as.matrix(db), years=years)
 
   return(out)
 
 }
 
-
-.getBlockBreaks = function(object, n, method="equal") {
-
-  if(is.null(attr(object, "weights")))
-    stop("No time dimension available for computing blocks.")
-
-  yr = attr(object, "weights")$year
-
-  if(method=="equal") {
-    breaks = ceiling(quantile(yr, prob=seq(0, 1, len=n+1)))
-    return(breaks)
-  }
-
-  # method using clustering
-
-}
-
-.optimBlocks = function(object, breaks, w) {
-
-
-  return(breaks)
-
-}
