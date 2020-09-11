@@ -11,9 +11,9 @@
 #'
 #' @export
 fit_selectivity = function(object, pattern=0, blocks=NULL,
-                           w=NULL, method=NULL, control=list(), ...) {
-  # this function creates all the parameters (e.g. knots, values)
-  # use a switch for every pattern
+                           w=NULL, method=NULL, control=list(),
+                           FUN=NULL, ...) {
+
   if(!inherits(object, "empirical_selectivity"))
     stop("Object to fit must be of class 'empirical_selectivity'.")
 
@@ -34,10 +34,13 @@ fit_selectivity = function(object, pattern=0, blocks=NULL,
 
   if(!is.null(blocks)) {
     if(is.null(breaks)) {
-      # equal is hardcoded temporarily
-      breaks = .getBlockBreaks(object, n=blocks, method="equal")
+
+      breaks = .getBlockBreaks(object, n=blocks, method=method,
+                               control=control)
     }
     if(method=="optim") breaks = .optimBlocks(object, breaks, w)
+
+    if(!is.null(attr(breaks, "n"))) blocks = attr(breaks, "n") # temporal solution
 
     if(length(breaks)!=(blocks+1))
       stop(sprintf("Incorrect number of breaks, %d were expected.", blocks+1))
@@ -61,17 +64,17 @@ fit_selectivity = function(object, pattern=0, blocks=NULL,
 
   if(identical(as.integer(pattern), 0L)) pattern = c(1, 24, 27)
 
-  output = fit_selectivity_0(object, pattern=pattern, control=control, ...)
+  # error function
+  if(is.null(FUN)) FUN = function(x, y) (log(x) - log(y))^2
+  FUN = match.fun(FUN)
+  if(!is.function(FUN)) stop("FUN must be a function.")
 
-    # switch(as.character(pattern),
-    #               '0' = fit_selectivity_0(object, pattern=patts, control=control, ...),
-    #               '1' = fit_selectivity_1(object, control=control, ...),
-    #               '24' = fit_selectivity_24(object, control=control, ...),
-    #               '27' = fit_selectivity_27(object, control=control, ...),
-    #               stop(sprintf("Selectivity pattern %s not implemented.", pattern)))
+  output = fit_selectivity_0(object, pattern=pattern,
+                             control=control, FUN=FUN, ...)
 
   attr(output, "fleet") = attr(object, "fleet")
   attr(output, "blocks") = ifelse(is.null(blocks), 0, blocks)
+  attr(output, "breaks") = breaks
   # output includes a function to predict.
   class(output) = "selectivity_model"
   return(output)
@@ -124,7 +127,8 @@ plot.selectivity_model = function(object, col="blue", ...) {
     on.exit(par(opar))
     for(i in seq_len(nb)) {
       main = sprintf("yr = %s", rownames(object$selectivity)[i])
-      plot(object$selectivity[i, ], main=main, col=col, ...)
+      plot(object$selectivity[i, ], main=main, col=col,
+           ylim=c(0,1), ...)
       mod = attr(object$selectivity[i, ], "model")
       lines(mod, lwd=2, col="black", lty=1)
       points(object$x, object$y[i, ], pch=19, cex=0.75, col=col)
