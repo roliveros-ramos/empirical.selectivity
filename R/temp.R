@@ -1,13 +1,4 @@
-#' Directional color palette.
-#'
-#' @param n Number of colors
-#' @param col Base color for the palette.
-#' @param p Power to scale the increase in intensity. Default is 0.8, 1 gives linear decrease.
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 directionalPalette = function(n=64, col="green3", p=0.8, x=NULL, ...) {
 
   alpha = seq(from=0, to=1, length=n)^p
