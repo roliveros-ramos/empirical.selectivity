@@ -140,7 +140,7 @@ split.empirical_selectivity = function (x, f, breaks, drop = FALSE, sep = ".",
   else if(drop)
     f = factor(f)
   storage.mode(f) = "integer"
-  ind = .Internal(split(seq_len(nrow(x)), f))
+  ind = split.default(seq_len(nrow(x)), f)
   out = lapply(ind, function(i) x[i])
   return(out)
 
