@@ -90,35 +90,21 @@ predict.selectivity_model = function(object, x, ...) {
 }
 
 #' Title
-#' @param object
 #'
+#' @param object
 #' @param file
-#' @param phase
 #' @param t
+#' @param phase
 #' @param ...
 #'
 #' @export
-SS_writeselec = function(object, file=NULL, phase=2, t=1, ...) {
+SS_writeselec = function(object, file=NULL, t=1, phase=2, ...) {
 
   FUN = match.fun(sprintf(".SS_writeselec_%d", object$pattern[t]))
   out = FUN(object, file=file, phase=phase, t=t, ...)
   return(invisible(out))
 
 }
-
-
-#' Title
-#'
-#' @param ...
-#'
-#' @return
-#' @export
-#'
-#' @examples
-SS_run = function(...) {
-
-}
-
 
 
 # Methods -----------------------------------------------------------------
