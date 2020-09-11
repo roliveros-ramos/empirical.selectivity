@@ -23,7 +23,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), ...
     ind = .nonNullPoints(y, thr=thr, span=span)
     x0 = x[ind]
     y0 = y[ind]
-    mod = suppressMessages(fks(x0, log(y0), k = k-2, degree=3, prec=0, search=search))
+    mod = suppressMessages(fks::fks(x0, log(y0), k = k-2, degree=3, prec=0, search=search))
     pred = predict(mod, newdata = data.frame(x=x), type="response")
     pred = exp(pred - max(pred, na.rm=TRUE))
     output = list(fitted=pred, x=x, y=y, model=mod, npar=2*nrow(mod$knots)+2)
