@@ -11,6 +11,7 @@ fit_selectivity(
   w = NULL,
   method = NULL,
   control = list(),
+  FUN = NULL,
   ...
 )
 }
