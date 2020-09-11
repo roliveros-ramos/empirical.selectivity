@@ -1,6 +1,8 @@
 
-fit_selectivity_24 = function(object, ...) {
+fit_selectivity_24 = function(object, FUN, ...) {
   # create a list of model parameters
+
+  FUN = match.fun(FUN)
 
   # main function to be applied to 'empirical_selectivity' object
   .fit_selectivity_24 = function(x, y, ...) {
@@ -8,7 +10,7 @@ fit_selectivity_24 = function(object, ...) {
     x = as.numeric(x)
     y = as.numeric(y)
     par = .doubleNorm24_guess(x, y)
-    mod = optim(par, fn=.doubleNorm24_fit, x=x, y=y, method="L-BFGS-B")
+    mod = optim(par, fn=.doubleNorm24_fit, x=x, y=y, FUN=FUN, method="L-BFGS-B")
     mod$guess = par
     pred = .doubleNorm24(x, mod$par)
 
@@ -33,7 +35,7 @@ fit_selectivity_24 = function(object, ...) {
     npar[i]  = tmp$npar
   }
 
-  fit = .compare_fit(xo, object)
+  fit = .compare_fit(xo, object, FUN)
 
   output = list(selectivity=xo, models=out, y=object, x=x,
                 pattern=rep(24, nrow(xo)), fit=fit, npar=npar)
@@ -109,12 +111,12 @@ fit_selectivity_24 = function(object, ...) {
 }
 
 
-.doubleNorm24_fit = function(par, x, y) {
+.doubleNorm24_fit = function(par, x, y, FUN) {
+  FUN = match.fun(FUN)
   fit = .doubleNorm24(x, par)
-  out = sum((log(fit) - log(y))^2)
+  out = sum(FUN(fit, y), na.rm=TRUE)
   return(out)
 }
-
 
 #' @export
 .SS_writeselec_24 = function(object, file=NULL, phase=2, t=1, ...) {

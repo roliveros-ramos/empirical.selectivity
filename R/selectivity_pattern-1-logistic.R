@@ -1,6 +1,8 @@
 
-fit_selectivity_1 = function(object, ...) {
+fit_selectivity_1 = function(object, FUN, ...) {
   # create a list of model parameters
+
+  FUN = match.fun(FUN)
 
   # main function to be applied to 'empirical_selectivity' object
   .fit_selectivity_1 = function(x, y, ...) {
@@ -8,7 +10,7 @@ fit_selectivity_1 = function(object, ...) {
     x = as.numeric(x)
     y = as.numeric(y)
     par = .logistic1_guess(x, y)
-    mod = optim(par, fn=.logistic1_fit, x=x, y=y, method="L-BFGS-B")
+    mod = optim(par, fn=.logistic1_fit, x=x, y=y, FUN=FUN, method="L-BFGS-B")
     mod$guess = par
     pred = .logistic1(x, mod$par)
 
@@ -33,7 +35,7 @@ fit_selectivity_1 = function(object, ...) {
     npar[i]  = tmp$npar
   }
 
-  fit = .compare_fit(xo, object)
+  fit = .compare_fit(xo, object, FUN)
 
   output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(1, nrow(xo)),
                 fit=fit, npar=npar)
@@ -54,8 +56,6 @@ fit_selectivity_1 = function(object, ...) {
   return(sel)
 }
 
-# sel = .logistic1(x, c(120, 150))
-
 .logistic1_guess = function(x, y) {
 
   p1 = min(x[which(y>=0.5)])
@@ -67,13 +67,12 @@ fit_selectivity_1 = function(object, ...) {
 
 }
 
-
-.logistic1_fit = function(par, x, y) {
+.logistic1_fit = function(par, x, y, FUN) {
+  FUN = match.fun(FUN)
   fit = .logistic1(x, par)
-  out = sum((log(fit) - log(y))^2)
+  out = sum(FUN(fit, y), na.rm=TRUE)
   return(out)
 }
-
 
 #' @export
 .SS_writeselec_1 = function(object, file=NULL, phase=2, t=1, ...) {

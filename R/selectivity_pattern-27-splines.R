@@ -1,5 +1,5 @@
 
-fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), ...) {
+fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN, ...) {
 
   if(any(k<3)) {
     k = pmax(k, 3)
@@ -48,7 +48,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), ...
     npar[i]  = tmp$npar
   }
 
-  fit = .compare_fit(xo, object)
+  fit = .compare_fit(xo, object, FUN)
 
   output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(27, nrow(xo)),
                 fit=fit, npar=npar)

@@ -1,16 +1,18 @@
 
-fit_selectivity_0 = function(object, pattern, ...) {
+fit_selectivity_0 = function(object, pattern, FUN, ...) {
   # create a list of model parameters
 
   out  = list()
   fit  = list()
   npar = list()
 
+  FUN = match.fun(FUN)
+
   for(patt in pattern) {
     nm = as.character(patt)
     message("--- Selectivity pattern ", nm, "\n")
-    FUN = match.fun(sprintf("fit_selectivity_%s", nm))
-    outx  = FUN(object, ...)
+    MODEL = match.fun(sprintf("fit_selectivity_%s", nm))
+    outx  = MODEL(object, FUN=FUN, ...)
     out[[nm]] = outx
     fit[[nm]] = outx$fit
     npar[[nm]] = outx$npar
@@ -58,11 +60,10 @@ fit_selectivity_0 = function(object, pattern, ...) {
 #   return(out)
 # }
 
-.compare_fit = function(fit, y) {
-  out = rowSums((log(fit) - log(y))^2)
+.compare_fit = function(fit, y, FUN) {
+  out = rowSums(FUN(fit, y))
   return(out)
 }
-
 
 
 
