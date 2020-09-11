@@ -1,20 +1,30 @@
 
 # Class empirical selectivity ---------------------------------------------
 
-#' Title
-#' @param object
-#' @param fleet
-#' @param sex
-#' @param by
+#' @title Empirical selectivity diagnostic
+#' @description Function to compute the empirical selectivity diagnostic for SS
+#' outputs and methods to extract them for a particular fleet and time.
+#' @param object Typically, the result of reading Stock Synthesis model outputs
+#' with \code{SS_output}.
+#' @param fleet Integer, fleet number to compute the empirical selectivity.
+#' @param sex If the fleet targets a specific sex, defaults to 1.
+#' @param by Either 'length' or 'age', defaults to 'length'.
+#' @param ... Additional arguments for specific methods, see Details.
+#' @details This function is called on run time by \code{SS_output}, so the
+#' empirical selectivities are already computed (for length and age) in
+#' your 'rep' object. An additional call to the function can be used to extract
+#' the empirical selectivities for a particular fleet or sex.
+#' @examples \dontrun{
 #'
-#' @param ...
-#'
+#' rep = BigEye_2020
+#' es = empirical_selectivity(rep, fleet=2, by="length")
+#' }
 #' @export
 empirical_selectivity = function(object, ...) {
   UseMethod("empirical_selectivity")
 }
 
-#' @describeIn empirical_selectivity
+#' @describeIn empirical_selectivity General constructor
 #' @export
 empirical_selectivity.default = function(object, thr=1e-5, ...) {
   # this function probably is gonna be used within SS_output
@@ -37,9 +47,9 @@ empirical_selectivity.default = function(object, thr=1e-5, ...) {
 
 }
 
-#' @describeIn empirical_selectivity
+#' @describeIn empirical_selectivity Extract from empirical_selectivity objects
 #' @export
-empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1, by="length") {
+empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1, by="length", ...) {
 
   by = match.arg(by, c("length", "age"))
 
@@ -55,11 +65,11 @@ empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, se
 
 }
 
-#' @describeIn empirical_selectivity
+#' @describeIn empirical_selectivity Extracts from SS_output object
 #' @export
-empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length") {
+empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length", ...) {
 
-  return(empirical_selectivity(object$empirical_selectivity, fleet=fleet, sex=sex, by=by))
+  return(empirical_selectivity(object$empirical_selectivity, fleet=fleet, sex=sex, by=by, ...))
 
 }
 
@@ -201,7 +211,7 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 
   # nbin extends fshbins
   nbin0 = round(as.numeric(predict(fmod, newdata = data.frame(ind=find0))),3)
-  mid0 = as.numeric(filter(nbin0, filter=c(0.5, 0.5), side=1))
+  mid0 = as.numeric(stats::filter(nbin0, filter=c(0.5, 0.5), sides=1))
   ind1 = which(nbin0 >= min(popbin) & nbin0 <= max(popbin))
   nbin = nbin0[ind1]
   mid = mid0[ind1+1]
