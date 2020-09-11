@@ -29,12 +29,28 @@ dat = weighted.mean(es2, w="catch")
 plot(dat)
 # the number k includes the 2 external knots, k=5 would be
 # equivalent to k=3 in the freeknotspline package
-ss_01 = fit_selectivity(dat, pattern=1)
+
+d_mul = function(x, y) -dnorm(y, mean=x, sd=x*(1-x), log = TRUE)
+lnorm = function(x, y) -dlnorm(y, mean=log(x), sd=sd(log(x/y)),log = TRUE)
+lnorm2 = function(x, y) -dlnorm(y, mean=log(x), log = TRUE)
+
+patt = 24
+ss_01a = fit_selectivity(dat, pattern=patt)
+ss_01b = fit_selectivity(dat, pattern=patt, FUN=d_mul)
+ss_01c = fit_selectivity(dat, pattern=patt, FUN=lnorm)
+ss_01d = fit_selectivity(dat, pattern=patt, FUN=lnorm2)
+
+plot(dat)
+lines(ss_01a, col=1, lwd=2)
+lines(ss_01b, col=2, lwd=2)
+lines(ss_01c, col=3, lwd=2)
+lines(ss_01d, col=4, lwd=2)
+
 ss_24 = fit_selectivity(dat, pattern=24)
 ss_27 = fit_selectivity(dat, pattern=27, k=5)
 ss_27a = fit_selectivity(dat, pattern=27, k=5, control=list(optimizer="golden"))
 
-lines(ss_01, col="green", lwd=2)
+
 lines(ss_24, col="black", lwd=2)
 lines(ss_27, col="red", lwd=2)
 
@@ -60,11 +76,17 @@ ss_mult = fit_selectivity(es2, pattern=c(1, 24, 27), blocks=3, k=5, w="catch")
 plot(ss_mult)
 summary(ss_mult)
 
-# optimization of blocks positions (method="optim")
-# if block positions are provided, are used as start search point
-ss_block2 = fit_selectivity(es2, pattern=24, blocks = 4, w="catch", method="optim")
+# optimization of blocks positions (method="cluster")
+ss_block2 = fit_selectivity(es2, pattern=24, blocks = 6, w="catch",
+                            method="cluster", FUN=lnorm,
+                            control=list(min_block_size=20))
 plot(ss_block2)
 summary(ss_block2)
+
+clus = attr(attr(ss_block2, "breaks"), "cluster")
+par(mfrow=c(2,1), mar=c(3,3,1,1))
+plot(clus$year, clus$cluster, col=clus$cluster, pch=19, cex=0.7, las=1)
+plot(clus$year, clus$block, col=clus$cluster, pch=19, cex=0.7, las=1)
 
 # write the config for the ctl file
 SS_writeselec(ss_01)
@@ -78,3 +100,6 @@ y = cumsum(runif(100))
 
 mod = fks(x=x, y=y, k=5)
 
+# fixing the seed (reproducibility)
+# blocks is "maximum number of clusters"
+# fitting issues related to max empirical selectivity value
