@@ -139,7 +139,7 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 .getES = function(object, by="length", use="B", thr=1e-5) {
 
   by = match.arg(by, choices = c("length", "age"))
-
+  # sizedbase
   db  = sprintf("%sdbase", substr(by, 1, 3))
   nat = sprintf("nat%s", substr(by, 1, 3))
   years = seq(from=object$startyr, to=object$endyr, by=1)
@@ -224,13 +224,15 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 
   # if cond is FALSE, regrid popbin
 
-  mini = head(approx(x=popbin2, n=k*length(popbin2)-(k-1))$y, -1)
+  # this will deal with irregular bins!
+  xout = .rebinning(x=popbin2, y=c(nbin, max(top)), k=100)
 
-  out = cut(mini, breaks=c(nbin, max(top)), labels=FALSE, right = FALSE)
-  levels = unique(na.omit(out))
-  out = matrix(out, ncol=k, byrow = TRUE)
-  .mytable = function(x, levels) table(factor(x, levels=levels))
-  xout = t(apply(out, 1, .mytable, levels=levels))/k
+  # mini = head(approx(x=popbin2, n=k*length(popbin2)-(k-1))$y, -1)
+  # out = cut(mini, breaks=c(nbin, max(top)), labels=FALSE, right = FALSE)
+  # levels = unique(na.omit(out))
+  # out = matrix(out, ncol=k, byrow = TRUE)
+  # .mytable = function(x, levels) table(factor(x, levels=levels))
+  # xout = t(apply(out, 1, .mytable, levels=levels))/k
 
   output = list(bin=nbin, mid=mid, conv = xout)
   return(output)
@@ -262,4 +264,15 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 
 }
 
+.rebinning = function(x, y, k=100) {
+  .mini = function(x, k=100) head(approx(x=x, n=k*length(x)-(k-1))$y, -1)
+  .mytable = function(x, levels) table(factor(x, levels=levels))
+  xm = cbind(head(x, -1), tail(x, -1))
+  mini = apply(xm, 1, .mini, k=k)
+  out = cut(mini, breaks=y, right = FALSE)
+  levels = levels(out)
+  out = matrix(out, ncol=k, byrow = TRUE)
+  xout = t(apply(out, 1, .mytable, levels=levels))/k
+  return(xout)
+}
 
