@@ -1,13 +1,17 @@
-#' Title
+#' Fitting models to empirical selectivity data
 #'
-#' @param object
-#'
-#' @param pattern
-#' @param blocks
-#' @param w
-#' @param method
-#' @param control
-#' @param ...
+#' @param object An empirical selectivity object, extracted with
+#' the \code{empirical_selectivity} function.
+#' @param pattern Integer, the code for the selectivity model, as in SS.
+#' @param blocks Integer, with the maximum number of blocks to be fitted,
+#' or a vector with the year breaks for each block.
+#' @param w A vector of weights (one per year) or a character
+#' ('yield', 'Neff', 'Nsamp' or 'equal').
+#' @param method Method for creating the blocks, current available methods are
+#' 'equal' (equidistant placement) and 'cluster'.
+#' @param control A list with additional options for every method. See details.
+#' @param FUN Error function used for data fitting.
+#' @param ... Additional arguments, not used currently.
 #'
 #' @export
 fit_selectivity = function(object, pattern=0, blocks=NULL,
@@ -40,7 +44,8 @@ fit_selectivity = function(object, pattern=0, blocks=NULL,
     }
     if(method=="optim") breaks = .optimBlocks(object, breaks, w)
 
-    if(!is.null(attr(breaks, "n"))) blocks = attr(breaks, "n") # temporal solution
+    if(!is.null(attr(breaks, "n", exact=TRUE)))
+      blocks = attr(breaks, "n", exact=TRUE) # temporal solution
 
     if(length(breaks)!=(blocks+1))
       stop(sprintf("Incorrect number of breaks, %d were expected.", blocks+1))

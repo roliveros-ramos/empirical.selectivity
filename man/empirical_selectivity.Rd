@@ -5,6 +5,7 @@
 \alias{empirical_selectivity.default}
 \alias{empirical_selectivity.SS_empirical_selectivity}
 \alias{empirical_selectivity.SS_output}
+\alias{empirical_selectivity.matrix}
 \title{Empirical selectivity diagnostic}
 \usage{
 empirical_selectivity(object, ...)
@@ -14,6 +15,18 @@ empirical_selectivity(object, ...)
 \method{empirical_selectivity}{SS_empirical_selectivity}(object, fleet = NULL, sex = 1, by = "length", ...)
 
 \method{empirical_selectivity}{SS_output}(object, fleet = NULL, sex = 1, by = "length", ...)
+
+\method{empirical_selectivity}{matrix}(
+  object,
+  fleet = NULL,
+  sex = 1,
+  by = "length",
+  years = NULL,
+  bins = NULL,
+  weights = NULL,
+  model = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{Typically, the result of reading Stock Synthesis model outputs
@@ -44,6 +57,8 @@ the empirical selectivities for a particular fleet or sex.
 \item \code{SS_empirical_selectivity}: Extract from empirical_selectivity objects
 
 \item \code{SS_output}: Extracts from SS_output object
+
+\item \code{matrix}: Transform a matrix in a empirical_selectivity object.
 }}
 
 \examples{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_selectivity.R
 \name{fit_selectivity}
 \alias{fit_selectivity}
-\title{Title}
+\title{Fitting models to empirical selectivity data}
 \usage{
 fit_selectivity(
   object,
@@ -16,10 +16,26 @@ fit_selectivity(
 )
 }
 \arguments{
-\item{object}{}
+\item{object}{An empirical selectivity object, extracted with
+the \code{empirical_selectivity} function.}
 
-\item{...}{}
+\item{pattern}{Integer, the code for the selectivity model, as in SS.}
+
+\item{blocks}{Integer, with the maximum number of blocks to be fitted,
+or a vector with the year breaks for each block.}
+
+\item{w}{A vector of weights (one per year) or a character
+('yield', 'Neff', 'Nsamp' or 'equal').}
+
+\item{method}{Method for creating the blocks, current available methods are
+'equal' (equidistant placement) and 'cluster'.}
+
+\item{control}{A list with additional options for every method. See details.}
+
+\item{FUN}{Error function used for data fitting.}
+
+\item{...}{Additional arguments, not used currently.}
 }
 \description{
-Title
+Fitting models to empirical selectivity data
 }
