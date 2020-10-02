@@ -15,7 +15,8 @@ weighted.mean.empirical_selectivity = function(x, w, ...) {
     w = if(w=="equal") 1 else attr(x, "weights")[, w]
   } else lab = attr(x, "fleet")
 
-  if(any(is.na(w))) stop("NA in weights are not allowed.")
+  if(any(is.na(w)))
+    stop("NA in weights are not allowed.")
 
   N = nrow(x)
   if(length(w)==1) w = rep(w, N)
@@ -34,8 +35,10 @@ weighted.mean.empirical_selectivity = function(x, w, ...) {
   attr(output, "fleet") = attr(x, "fleet")
   attr(output, "by") = attr(x, "by")
   xmod = attr(x, "model")
-  xmod$y = matrix(colSums(w*xmod$y), nrow=1)
-  attr(output, "model") = xmod
+  if(!is.null(xmod)) {
+    xmod$y = matrix(colSums(w*xmod$y), nrow=1)
+    attr(output, "model") = xmod
+  }
 
   class(output) = c("empirical_selectivity", "SS_timexsize", "matrix")
   return(output)

@@ -40,27 +40,44 @@ plot_TimexSize_type1 = function(x, col, alpha, lab, xlim, ylim, main, ...) {
     cols = seq_len(nrow(z)) + 1
   }
 
+  mod = attr(z, "model")
+
   for(i in seq_len(nrow(z))) {
     lines(y, as.numeric(z[i,]), col=cols[i])
   }
   if(!is.null(attr(z, "weights"))) {
-    lines(y, weighted.mean(z, w="catch"), lwd=2, col="black", lty=3)
-    lines(y, weighted.mean(z, w="Nsamp"), lwd=2, col="red", lty=1)
-    lines(y, weighted.mean(z, w="Neff"), lwd=2, col="red", lty=3)
-    lines(y, weighted.mean(z, w="equal"), lwd=2, col=col, lty=1)
+
+    if(!all(is.na(attr(z, "weights")[,"catch"])))
+      lines(y, weighted.mean(z, w="catch"), lwd=2, col="black", lty=3)
+    if(!all(is.na(attr(z, "weights")[,"Nsamp"])))
+      lines(y, weighted.mean(z, w="Nsamp"), lwd=2, col="red", lty=1)
+    if(!all(is.na(attr(z, "weights")[,"Neff"])))
+      lines(y, weighted.mean(z, w="Neff"), lwd=2, col="red", lty=3)
+      lines(y, weighted.mean(z, w="equal"), lwd=2, col=col, lty=1)
 
     legend("topleft", c("catch", "N (sample)", "N (effective)", "equal", "model"),
            col=c(1,2,2,col,1), lty=c(3,1,3,1,1), lwd=c(2,2,2,2,3), bty="n")
 
   } else {
 
+    if(!is.null(mod)) {
+
     legend("topleft", c("model",rownames(z)),
            col=c(1, cols), lty=1, lwd=c(3, rep(1, nrow(z))), bty="n")
 
+    } else {
+
+      legend("topleft", c(rownames(z)),
+             col=c(cols), lty=1, lwd=c(rep(1, nrow(z))), bty="n")
+
+    }
+
   }
-  mod = attr(z, "model")
-  mod$y = colMeans(mod$y)
-  lines(mod, lwd=3, col="black", lty=1)
+
+  if(!is.null(mod)) {
+    mod$y = colMeans(mod$y)
+    lines(mod, lwd=3, col="black", lty=1)
+  }
   axis(1)
   axis(2, las=1)
   box()

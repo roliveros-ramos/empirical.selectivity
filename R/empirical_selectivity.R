@@ -37,7 +37,8 @@ empirical_selectivity.default = function(object, thr=1e-5, ...) {
 
   # if does not exist, create it (for older versions)
   output = list(length = .getES(object, by="length", use="B", thr=thr),
-                age    = .getES(object, by="age", use="B", thr=thr))
+                age    = .getES(object, by="age", use="B", thr=thr),
+                gsize  = .getES(object, by="gsize", use="B", thr=thr))
 
   output = unlist(output, recursive = FALSE)
 
@@ -51,7 +52,7 @@ empirical_selectivity.default = function(object, thr=1e-5, ...) {
 #' @export
 empirical_selectivity.SS_empirical_selectivity = function(object, fleet=NULL, sex=1, by="length", ...) {
 
-  by = match.arg(by, c("length", "age"))
+  by = match.arg(by, c("length", "age", "gsize"))
 
   if(is.null(fleet)) return(object)
 
@@ -73,6 +74,30 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 
 }
 
+#' @describeIn empirical_selectivity Transform a matrix in a empirical_selectivity object.
+#' @export
+empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
+                                        years=NULL, bins=NULL, weights=NULL,
+                                        model=NULL,  ...) {
+
+  if(is.null(fleet)) stop("Fleet name ('character') must be provided")
+  if(is.null(years)) stop("Years (rows) must be provided")
+  if(is.null(bins)) stop("Bin marks (columns) must be provided")
+
+  out = object
+  colnames(out) = bins
+  rownames(out) = years
+
+  attr(out, "fleet") = fleet
+  attr(out, "by") = by
+  attr(out, "model") = model
+  attr(out, "weights") = weights
+
+  class(out) = c("empirical_selectivity", "SS_timexsize", "matrix")
+
+  return(out)
+
+}
 
 # Internal functions ------------------------------------------------------
 
@@ -84,6 +109,8 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
   out = matrix(0, nrow=length(years), ncol=length(bins))
   rownames(out) = years
   colnames(out) = bins
+
+  if(is.null(x)) return(NA*out)
 
   msg = sprintf("Variable %s not found.", var)
   if(!(var %in% names(x))) stop(msg)
@@ -138,10 +165,18 @@ empirical_selectivity.SS_output = function(object, fleet=NULL, sex=1, by="length
 
 .getES = function(object, by="length", use="B", thr=1e-5) {
 
-  by = match.arg(by, choices = c("length", "age"))
+  by = match.arg(by, choices = c("length", "age", "gsize"))
+
+  if(by=="gsize") return(NULL)
+
+  code = switch (by,
+    length = "len",
+    age    = "age",
+    gsize  = "size")
+
   # sizedbase
-  db  = sprintf("%sdbase", substr(by, 1, 3))
-  nat = sprintf("nat%s", substr(by, 1, 3))
+  db  = sprintf("%sdbase", code)
+  nat = sprintf("nat%s", code)
   years = seq(from=object$startyr, to=object$endyr, by=1)
 
   naged  = object[[db]]
