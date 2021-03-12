@@ -1,0 +1,29 @@
+citHeader("Empirical selectivity diagnostics for fish stock assessment models. See SAC-11 INF-F 'Implementing risk analysis - technical background (bigeye case study)' [Page 18] for a description of the method and then SAC-11-07 'Yellowfin tuna in the eastern Pacific Ocean, 2019: Benchmark assessment' as an example of its use.")
+
+bibentry(
+ bibtype="Manual",
+ title="Empirical selectivity diagnostics for r4ss",
+ year="2020",
+ author="Ricardo Oliveros-Ramos",
+ note="R package version 0.1.2. DOI:10.5281/zenodo.4599748"
+ )
+
+bibentry(
+ bibtype="inproceedings",
+ title="Implementing risk analysis - technical background (bigeye case study)",
+ author="Mark N. Maunder, Haikun Xu, Cleridy E. Lennert-Cody, Juan L. Valero, Alexandre Aires-da-Silva, Carolina Minte-Vera",
+ year="2020",
+ booktitle="11th Scient. Adv. Com. Meeting",
+ number="SAC-11 INF-F",
+ organization="Inter-Amer. Trop. Tuna Comm."
+ )
+
+bibentry(
+ bibtype="inproceedings",
+ title="Yellowfin tuna in the eastern Pacific Ocean, 2019: Benchmark assessment",
+ author="Carolina Minte-Vera, Mark N. Maunder, Haikun Xu, Juan L. Valero, Cleridy E. Lennert-Cody, and Alexandre Aires-da-Silva",
+ year="2020",
+ booktitle="11th Scient. Adv. Com. Meeting",
+ number="SAC-11-07",
+ organization="Inter-Amer. Trop. Tuna Comm."
+ )
