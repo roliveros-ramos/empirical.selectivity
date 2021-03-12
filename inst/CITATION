@@ -5,7 +5,7 @@ bibentry(
  title="Empirical selectivity diagnostics for r4ss",
  year="2020",
  author="Ricardo Oliveros-Ramos",
- note="R package version 0.1.2. DOI:10.5281/zenodo.4599748"
+ note="R package version 0.1.2. DOI:10.5281/zenodo.4599787"
  )
 
 bibentry(
