@@ -69,6 +69,11 @@ fit_selectivity_1 = function(object, FUN, ...) {
 
 .logistic1_fit = function(par, x, y, FUN) {
   FUN = match.fun(FUN)
+  removeZero = !is.finite(FUN(1,0))
+  if(removeZero) {
+    tinyExp = floor(log10(min(y[y!=0]))) - 3 # removeZeros
+    y[y==0] = 10^tinyExp
+  }
   fit = .logistic1(x, par)
   out = sum(FUN(fit, y), na.rm=TRUE)
   return(out)
