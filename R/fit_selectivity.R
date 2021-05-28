@@ -186,6 +186,25 @@ summary.selectivity_model = function(object, ...) {
 }
 
 #' @export
+coef.selectivity_model = function(object, ...) {
+
+  nblock  = nrow(object$fit)
+  nmodels = ncol(object$fit)
+
+  .tab = function(i, object) object$models[[i]]$par
+
+  out = lapply(seq_len(nblock), FUN = .tab, object=object)
+
+  names(out) = rownames(object$fit)
+
+  return(out)
+
+
+
+}
+
+
+#' @export
 print.summary.empirical_selectivity = function(x, ...) {
 
   for(i in seq_along(x)) {
