@@ -2,9 +2,10 @@
 fit_selectivity_0 = function(object, pattern, FUN, ...) {
   # create a list of model parameters
 
-  out  = list()
-  fit  = list()
-  npar = list()
+  out   = list()
+  fit   = list()
+  npar  = list()
+  scale = list()
 
   FUN = match.fun(FUN)
 
@@ -16,12 +17,14 @@ fit_selectivity_0 = function(object, pattern, FUN, ...) {
     out[[nm]] = outx
     fit[[nm]] = outx$fit
     npar[[nm]] = outx$npar
+    scale[[nm]] = outx$scale
   }
 
   x = as.numeric(colnames(object))
 
   fit = as.data.frame(fit, check.names=FALSE)
   npar = as.data.frame(npar, check.names=FALSE)
+  scale = as.data.frame(scale, check.names=FALSE)
 
   best_model = apply(fit, 1, which.min)
   names(best_model) = rownames(object)
@@ -29,6 +32,7 @@ fit_selectivity_0 = function(object, pattern, FUN, ...) {
   xo = out[[1]]$selectivity
   output = out[[1]]$models
   best_pattern = out[[1]]$pattern
+  scales = out[[1]]$scale
   names(best_pattern) = rownames(object)
 
   if(length(pattern)>1) {
@@ -38,12 +42,13 @@ fit_selectivity_0 = function(object, pattern, FUN, ...) {
       xo[i, ] = as.numeric(this$selectivity[i, ])
       output[[i]] = this$models[[i]]
       best_pattern[i] = this$pattern[i]
+      scales[i] = this$scale[i]
       message(names(best_model)[i], ": ", this$pattern[i])
     }
   }
 
   output = list(selectivity=xo, models=output, y=object, x=x, pattern=best_pattern,
-                fit=fit, npar=npar)
+                fit=fit, npar=npar, scale=scales)
 
   return(output)
 
