@@ -14,7 +14,7 @@ fit_selectivity_24 = function(object, FUN, ...) {
     mod$guess = par
     pred = .doubleNorm24(x, mod$par)
 
-    output = list(fitted=pred, x=x, y=y, model=mod, npar=6)
+    output = list(fitted=pred, x=x, y=y, model=mod, npar=6, scale=1)
     return(output)
   }
 
@@ -23,6 +23,7 @@ fit_selectivity_24 = function(object, FUN, ...) {
   xo = object*0
   out = vector("list", nrow(object))
   npar = vector("integer", nrow(object))
+  scales = vector("double", nrow(object))
 
   labs = sprintf("year = %s", rownames(object))
   if(nrow(object)==1) labs = rownames(object)
@@ -33,12 +34,13 @@ fit_selectivity_24 = function(object, FUN, ...) {
     out[[i]] = tmp$model
     xo[i, ]  = tmp$fitted
     npar[i]  = tmp$npar
+    scales[i] = tmp$scale
   }
 
   fit = .compare_fit(xo, object, FUN)
 
   output = list(selectivity=xo, models=out, y=object, x=x,
-                pattern=rep(24, nrow(xo)), fit=fit, npar=npar)
+                pattern=rep(24, nrow(xo)), fit=fit, npar=npar, scale=scales)
 
   return(output)
 }

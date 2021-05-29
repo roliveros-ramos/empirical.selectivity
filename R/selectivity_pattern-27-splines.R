@@ -26,7 +26,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
     mod = suppressMessages(fks::fks(x0, log(y0), k = k-2, degree=3, prec=0, search=search))
     pred = predict(mod, newdata = data.frame(x=x), type="response")
     pred = exp(pred - max(pred, na.rm=TRUE))
-    output = list(fitted=pred, x=x, y=y, model=mod, npar=2*nrow(mod$knots)+2)
+    output = list(fitted=pred, x=x, y=y, model=mod, npar=2*nrow(mod$knots)+2, scale=1)
     return(output)
   }
 
@@ -35,6 +35,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
   xo = object*0
   out = vector("list", nrow(object))
   npar = vector("integer", nrow(object))
+  scales = vector("double", nrow(object))
 
   labs = sprintf("year = %s", rownames(object))
   if(nrow(object)==1) labs = rownames(object)
@@ -46,12 +47,13 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
     out[[i]] = tmp$model
     xo[i, ]  = tmp$fitted
     npar[i]  = tmp$npar
+    scales[i] = tmp$scale
   }
 
   fit = .compare_fit(xo, object, FUN)
 
   output = list(selectivity=xo, models=out, y=object, x=x, pattern=rep(27, nrow(xo)),
-                fit=fit, npar=npar)
+                fit=fit, npar=npar, scale=scales)
 
   return(output)
 }
