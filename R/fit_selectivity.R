@@ -120,7 +120,7 @@ SS_writeselec = function(object, file=NULL, t=1, phase=2, ...) {
 
 
 #' @export
-plot.selectivity_model = function(object, col="blue", cex=1, ...) {
+plot.selectivity_model = function(object, col="blue", cex=1, ylim=c(0,1.2), ...) {
   # standard plot function common to all methods
   if(attr(object, "blocks")>0) {
     nb = attr(object, "blocks")
@@ -133,10 +133,10 @@ plot.selectivity_model = function(object, col="blue", cex=1, ...) {
     for(i in seq_len(nb)) {
       main = sprintf("yr = %s", rownames(object$selectivity)[i])
       plot(object$selectivity[i, ], main=main, col=col,
-           ylim=c(0,1), cex=0.5*cex, ...)
+           ylim=ylim, cex=0.5*cex, ...)
       mod = attr(object$selectivity[i, ], "model")
       lines(mod, lwd=2, col="black", lty=1)
-      points(object$x, object$y[i, ], pch=19, cex=0.75, col=col)
+      points(object$x, object$y[i, ]/object$scale[i], pch=19, cex=0.75, col=col)
       if(object$pattern[i]==27)
         abline(v=object$models[[i]]$knots$knots, lty=3, col="red")
       legend("topleft",
@@ -148,10 +148,10 @@ plot.selectivity_model = function(object, col="blue", cex=1, ...) {
 
   }
 
-  plot(object$selectivity, col=col, ylim=c(0,1), ...)
+  plot(object$selectivity, col=col, ylim=ylim, ...)
 
   if(nrow(object$selectivity)==1) {
-    points(object$x,object$y, pch=19, cex=0.5*cex)
+    points(object$x,object$y/object$scale, pch=19, cex=0.5*cex)
     if(object$pattern[1]==27)
       abline(v=object$models[[1]]$knots$knots, lty=3, col="red")
   }
