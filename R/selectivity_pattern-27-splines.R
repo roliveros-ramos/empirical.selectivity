@@ -73,9 +73,12 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
   ind0 = which.min(yx<thr/2)
   ind1 = which.max(yx>=(1-thr/2))
 
+  imin = which.max(y>0)
+  imax = length(y) - which.max(rev(y)>0) + 1
+
   ind = c(ind0, ind1)
   ind = seq(from=ind[1]-span[1], to=ind[2]+span[2], by=1)
-  ind = pmin(pmax(ind, 1), length(y))
+  ind = pmin(pmax(ind, imin), imax)
   ind = sort(unique(ind))
   return(ind)
 }
