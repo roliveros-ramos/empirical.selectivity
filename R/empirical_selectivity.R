@@ -210,8 +210,11 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   nbase = nbase[order(nbase$Yr), ]
 
   yr = sort(unique(natage$Yr))
-  natage_1 = natage[natage$Sex==1, -(1:12)]
-  natage_2 = natage[natage$Sex==2, -(1:12)]
+  natage_1 = nbase[nbase$Sex==1, -(1:12)]
+  natage_2 = nbase[nbase$Sex==2, -(1:12)]
+
+  natage_1[is.na(natage_1)] = 0
+  natage_2[is.na(natage_2)] = 0
 
   natage = as.matrix(natage_1) + as.matrix(natage_2)
   natage = natage %*% bins$conv # reshape to new bins
