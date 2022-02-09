@@ -1,10 +1,10 @@
-Package: r4ss.selectivity
+Package: empirical.selectivity
 Type: Package
 Title: Empirical selectivity diagnostics for r4ss 
 Version: 0.1.4
 Author: Ricardo Oliveros-Ramos
 Maintainer: Ricardo Oliveros-Ramos <ricardo.oliveros@gmail.com>
-Description: Temporary package to be included in r4ss
+Description: Empirical selectivity diagnostic
 Depends: R (>= 3.5.0)
 Imports:  
   graphics, 
