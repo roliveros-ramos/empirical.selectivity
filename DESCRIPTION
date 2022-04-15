@@ -1,12 +1,12 @@
 Package: empirical.selectivity
 Type: Package
 Title: Empirical selectivity diagnostics for r4ss 
-Version: 0.1.4
+Version: 0.1.5
 Author: Ricardo Oliveros-Ramos
 Maintainer: Ricardo Oliveros-Ramos <ricardo.oliveros@gmail.com>
 Description: Empirical selectivity diagnostic
 Depends: R (>= 3.5.0)
-Imports:  
+Imports: 
   graphics, 
   stats, 
   r4ss, 
@@ -15,4 +15,4 @@ Imports:
 License: GPL-3
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
