@@ -115,7 +115,8 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   msg = sprintf("Variable %s not found.", var)
   if(!(var %in% names(x))) stop(msg)
 
-  xout  = tapply(X = x[, var], INDEX=list(x$Yr, x[, bin.name]), FUN=FUN)
+  xout = tapply(X = x[, var], INDEX=list(x$Yr, x[, bin.name], x$Seas), FUN=FUN)
+  xout = apply(xout, 1:2, FUN = FUN, na.rm=TRUE)
 
   obins = as.numeric(colnames(xout))
   oyear = as.numeric(rownames(xout))
@@ -124,8 +125,9 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   rcols = match(obins, bins)
 
   out[na.omit(rrows), na.omit(rcols)] = xout[!is.na(rrows), !is.na(rcols)]
+  out[is.na(out)] = 0
 
-  if(is.null(mid)) colnames(out) = mid
+  if(!is.null(mid)) colnames(out) = mid
 
   if(normalize) {
 
@@ -187,7 +189,7 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
 
   # fill and zeros
   w_catch = .mta(object$catch, bins=seq_along(object$FleetNames),
-                 years=years, var="Obs", FUN=mean, by="fleet", normalize=FALSE, bin.name = "Fleet")
+                 years=years, var="Obs", FUN=sum, by="fleet", normalize=FALSE, bin.name = "Fleet")
   w_nsamp = .mta(naged, bins=seq_along(object$FleetNames),
                  years=years, var=nsamp, FUN=mean, by="fleet", normalize=FALSE, bin.name = "Fleet")
   w_effN  = .mta(naged, bins=seq_along(object$FleetNames),
@@ -205,9 +207,9 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   natage = natage[natage$'Beg/Mid'==use & natage$Era=="TIME", ]
   natage = natage[order(natage$Yr), ]
 
-  nbase = expand.grid(Yr=years, Sex=c(1,2))
+  nbase = expand.grid(Yr=years, Seas=seq_len(object$nseasons), Sex=c(1,2))
   nbase = merge(nbase, natage, all=TRUE)
-  nbase = nbase[order(nbase$Yr), ]
+  nbase = nbase[order(nbase$Yr, nbase$Seas, nbase$Sex), ]
 
   yr = sort(unique(natage$Yr))
   natage_1 = nbase[nbase$Sex==1, -(1:12)]
@@ -217,6 +219,7 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   natage_2[is.na(natage_2)] = 0
 
   natage = as.matrix(natage_1) + as.matrix(natage_2)
+  natage = rowsum(natage, group = nbase[nbase$Sex==1, ]$Yr)
   natage = natage %*% bins$conv # reshape to new bins
 
   output = lapply(split(naged, f = list(naged$Fleet, naged$Sex)),
