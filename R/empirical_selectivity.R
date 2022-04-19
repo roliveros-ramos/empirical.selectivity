@@ -242,8 +242,9 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
 
 }
 
-.checkBins = function(fshbin, popbin, n=20, k=1000) {
+.checkBins = function(fshbin, popbin, k=1000) {
 
+  n = max(20, 2*((max(popbin) - max(fshbin))/min(diff(fshbin))))
   find0 = seq_len(length(fshbin)+2*n) - n
   fmod = lm(bin ~ ind, data=data.frame(bin=fshbin, ind=seq_along(fshbin)))
 
@@ -266,7 +267,7 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   # if cond is FALSE, regrid popbin
 
   # this will deal with irregular bins!
-  xout = .rebinning(x=popbin2, y=c(nbin, max(top)), k=100)
+  xout = .rebinning(x=popbin2, y=na.omit(c(nbin, max(top))), k=100)
 
   # mini = head(approx(x=popbin2, n=k*length(popbin2)-(k-1))$y, -1)
   # out = cut(mini, breaks=c(nbin, max(top)), labels=FALSE, right = FALSE)
