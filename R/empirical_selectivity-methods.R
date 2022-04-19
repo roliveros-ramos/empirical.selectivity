@@ -82,7 +82,8 @@ weighted.mean.list = function(x, w, ...) {
   if(!missing(yr)) {
     years = suppressWarnings(as.numeric(rownames(x)))
     if(all(is.na(years))) stop("No year data is available for indexing.")
-    i = na.omit(match(yr, years))
+    i = which(years >= min(yr, na.rm=TRUE) & years <= max(yr, na.rm=TRUE))
+    # i = na.omit(match(yr, years))
   }
 
   if(!missing(age)) {
