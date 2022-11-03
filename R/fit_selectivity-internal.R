@@ -28,4 +28,9 @@
 
 }
 
+.tinyExp = function(y, pad=3) {
+  tinyExp = floor(log10(min(y[y!=0]))) - pad # removeZeros
+  y[y==0] = 10^tinyExp
+  return(y)
+}
 
