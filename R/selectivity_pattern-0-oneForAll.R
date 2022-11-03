@@ -29,6 +29,7 @@ fit_selectivity_0 = function(object, pattern, FUN, ...) {
   best_model = apply(fit, 1, which.min)
   names(best_model) = rownames(object)
 
+  # using first element as template
   xo = out[[1]]$selectivity
   output = out[[1]]$models
   best_pattern = out[[1]]$pattern
@@ -46,6 +47,8 @@ fit_selectivity_0 = function(object, pattern, FUN, ...) {
       message(names(best_model)[i], ": ", this$pattern[i])
     }
   }
+
+  names(output) = rownames(object)
 
   output = list(selectivity=xo, models=output, y=object, x=x, pattern=best_pattern,
                 fit=fit, npar=npar, scale=scales)
@@ -66,6 +69,13 @@ fit_selectivity_0 = function(object, pattern, FUN, ...) {
 # }
 
 .compare_fit = function(fit, y, FUN) {
+  FUN = match.fun(FUN)
+  class(y) = c("matrix", "array")
+  # y = as.numeric(y)
+  removeZero = !is.finite(FUN(1,0))
+  if(removeZero) {
+    y = .tinyExp(y)
+  }
   out = rowSums(FUN(fit, y))
   return(out)
 }
