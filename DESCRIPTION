@@ -11,8 +11,9 @@ Imports:
   stats, 
   r4ss, 
   fields, 
-  fks
+  fks,
+  mgcv
 License: GPL-3
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
