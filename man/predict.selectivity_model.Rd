@@ -2,15 +2,20 @@
 % Please edit documentation in R/fit_selectivity.R
 \name{predict.selectivity_model}
 \alias{predict.selectivity_model}
-\title{Title}
+\alias{predict.empirical_selectivity_model}
+\title{Predict the selectivity for a new length or age vector.}
 \usage{
 \method{predict}{selectivity_model}(object, x, ...)
+
+\method{predict}{empirical_selectivity_model}(object, x, ...)
 }
 \arguments{
-\item{object}{}
+\item{object}{A 'selectivity_model' or 'empirical_selectivity_model' object.}
 
-\item{...}{}
+\item{x}{The length or age vector.}
+
+\item{...}{Additional arguments, currently not used.}
 }
 \description{
-Title
+Predict the selectivity for a new length or age vector.
 }

@@ -52,15 +52,15 @@ the empirical selectivities for a particular fleet or sex.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{default}: General constructor
+\item \code{empirical_selectivity(default)}: General constructor
 
-\item \code{SS_empirical_selectivity}: Extract from empirical_selectivity objects
+\item \code{empirical_selectivity(SS_empirical_selectivity)}: Extract from empirical_selectivity objects
 
-\item \code{SS_output}: Extracts from SS_output object
+\item \code{empirical_selectivity(SS_output)}: Extracts from SS_output object
 
-\item \code{matrix}: Transform a matrix in a empirical_selectivity object.
+\item \code{empirical_selectivity(matrix)}: Transform a matrix in a empirical_selectivity object.
+
 }}
-
 \examples{
 \dontrun{
 
