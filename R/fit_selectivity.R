@@ -71,6 +71,7 @@ fit_selectivity = function(object, pattern=0, blocks=NULL,
 
   # error function
   if(is.null(FUN)) FUN = function(x, y) (log(x) - log(y))^2
+
   FUN = match.fun(FUN)
   if(!is.function(FUN)) stop("FUN must be a function.")
 
@@ -86,16 +87,28 @@ fit_selectivity = function(object, pattern=0, blocks=NULL,
 }
 
 
-#' Title
-#' @param object
-#'
-#' @param x
-#' @param ...
+#' Predict the selectivity for a new length or age vector.
+#' @param object A 'selectivity_model' or 'empirical_selectivity_model' object.
+#' @param x The length or age vector.
+#' @param ... Additional arguments, currently not used.
 #'
 #' @export
 predict.selectivity_model = function(object, x, ...) {
-  # use the internal function(size/age)
+  out = c(x=list(x), lapply(object$models, FUN=predict, x=x))
+  out = as.data.frame(out, optional = TRUE)
+  class(out) = c("predict_empirical_selectivity", class(out))
+  return(out)
 }
+
+#' @rdname predict.selectivity_model
+#' @export
+predict.empirical_selectivity_model = function(object, x, ...) {
+  out = object$predict(x)
+  names(out) = x
+  return(out)
+}
+
+
 
 #' Title
 #'
@@ -213,5 +226,26 @@ print.summary.empirical_selectivity = function(x, ...) {
   }
 
   return(invisible())
+
+}
+
+#' @export
+plot.predict_empirical_selectivity = function(object, xlim=NULL, ylim=NULL, lwd=3, col=NULL, ...) {
+
+  n = ncol(object)-1
+  if(is.null(xlim)) xlim = range(object$x)
+  if(is.null(ylim)) ylim = c(0,1.12)
+  if(is.null(col)) col = seq_len(n)
+  col = rep_len(col, n)
+  plot.new()
+  plot.window(xlim=xlim, ylim=ylim)
+  for(i in seq_len(n)) {
+    mtext(colnames(object)[i+1], 3, line=-i-1, adj=0.05, col=col[i])
+    lines(x=object$x, y=object[,i+1], col=col[i], lwd=lwd)
+  }
+  axis(1)
+  axis(2, las=2)
+  box()
+  return(invisible(NULL))
 
 }

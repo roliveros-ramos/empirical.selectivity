@@ -11,7 +11,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
   control$optimizer = match.arg(control$optimizer, c("genetic", "golden"))
 
   # main function to be applied to 'empirical_selectivity' object
-  .fit_selectivity_27 = function(x, y, k, thr, span, tiny=1e-4, search="genetic") {
+  .fit_selectivity_27 = function(x, y, k, thr, span, tiny=1e-4, search="genetic", ...) {
     # knots, values, derivatives at extremes
     # create a list of model parameters
     x = as.numeric(x)
@@ -23,10 +23,17 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
     ind = .nonNullPoints(y, thr=thr, span=span)
     x0 = x[ind]
     y0 = y[ind]
-    mod = suppressMessages(fks::fks(x0, log(y0), k = k-2, degree=3, prec=0, search=search))
-    pred = predict(mod, newdata = data.frame(x=x), type="response")
-    pred = exp(pred - max(pred, na.rm=TRUE))
-    output = list(fitted=pred, x=x, y=y, model=mod, npar=2*nrow(mod$knots)+2, scale=1)
+    mod = list()
+    mod$optim = suppressMessages(fks(x0, log(y0), k = k-2, degree=3, prec=0, search=search))
+    mod$par   = mod$optim$knots
+    mod$guess = NULL
+    mod$predict = function(x) .spline27(x, mod$optim)
+    mod$pattern = 27
+    class(mod) = "empirical_selectivity_model"
+
+    pred = mod$predict(x)
+
+    output = list(fitted=pred, x=x, y=y, model=mod, npar=2*nrow(mod$par)+2, scale=1)
     return(output)
   }
 
@@ -61,6 +68,12 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
 
 # Internal functions ------------------------------------------------------
 
+.spline27 = function(x, par) {
+  pred = predict(par, newdata = data.frame(x=x), type="response")
+  pred = exp(pred - max(pred, na.rm=TRUE))
+  return(pred)
+}
+
 .nonNullPoints = function(y, thr, span) {
   # copy y
 
@@ -92,7 +105,7 @@ fit_selectivity_27 = function(object, k=7, thr=1e-3, span=5, control=list(), FUN
   if(nrow(object$selectivity)>1)
     message("Using parameters of year", rownames(object$selectivity)[t])
 
-  knots = object$models[[t]]$knots
+  knots = object$models[[t]]$par
   n = nrow(knots)
   m = min(object$x)
   M = max(object$x)

@@ -10,10 +10,16 @@ fit_selectivity_1 = function(object, prob=0.95, FUN, ...) {
     x = as.numeric(x)
     y = as.numeric(y)
     par = .logistic1_guess(x, y, prob=prob)
-    mod = optim(par, fn=.logistic1_fit, x=x, y=y, prob=prob, FUN=FUN, method="L-BFGS-B",
+    mod = list()
+    mod$optim = optim(par, fn=.logistic1_fit, x=x, y=y, prob=prob, FUN=FUN, method="L-BFGS-B",
                 lower=c(0.1, 0.1, 0.5), upper=c(Inf, Inf, 2))
+    mod$par   = mod$optim$par
     mod$guess = par
-    pred = .logistic1(x, mod$par, prob=prob)
+    mod$predict = function(x) .logistic1(x, mod$par, prob=prob)
+    mod$pattern = 1
+    class(mod) = "empirical_selectivity_model"
+
+    pred = mod$predict(x)
     scale = mod$par[3]
 
     output = list(fitted=pred, x=x, y=y, model=mod, npar=2, scale=scale)
@@ -86,8 +92,7 @@ fit_selectivity_1 = function(object, prob=0.95, FUN, ...) {
   FUN = match.fun(FUN)
   removeZero = !is.finite(FUN(1,0))
   if(removeZero) {
-    tinyExp = floor(log10(min(y[y!=0]))) - 3 # removeZeros
-    y[y==0] = 10^tinyExp
+    y = .tinyExp(y)
   }
   fit = par[3]*.logistic1(x, par, prob=prob)
   out = sum(FUN(fit, y), na.rm=TRUE)

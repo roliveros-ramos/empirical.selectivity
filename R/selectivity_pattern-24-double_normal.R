@@ -10,9 +10,15 @@ fit_selectivity_24 = function(object, FUN, ...) {
     x = as.numeric(x)
     y = as.numeric(y)
     par = .doubleNorm24_guess(x, y)
-    mod = optim(par, fn=.doubleNorm24_fit, x=x, y=y, FUN=FUN, method="L-BFGS-B")
+    mod = list()
+    mod$optim = optim(par, fn=.doubleNorm24_fit, x=x, y=y, FUN=FUN, method="L-BFGS-B")
+    mod$par   = mod$optim$par
     mod$guess = par
-    pred = .doubleNorm24(x, mod$par)
+    mod$predict = function(x) .doubleNorm24(x, mod$par)
+    mod$pattern = 24
+    class(mod) = "empirical_selectivity_model"
+
+    pred = mod$predict(x)
 
     output = list(fitted=pred, x=x, y=y, model=mod, npar=6, scale=1)
     return(output)
@@ -103,8 +109,8 @@ fit_selectivity_24 = function(object, FUN, ...) {
   p2 = logit((peak2 - peak1)/(0.99*max(x) - peak1 - binwidth2))
   p3 = logS(x, y, ind=which(x<peak1 & y > 1e-3), peak=peak1)
   p4 = logS(x, y, ind=which(x>peak2 & y > 1e-3), peak=peak2)
-  p5 = logit(y[1])
-  p6 = logit(y[length(x)])
+  p5 = logit(head(y[y!=0], 1))
+  p6 = logit(tail(y[y!=0], 1))
 
   out = c(p1=p1, p2=p2, p3=p3, p4=p4, p5=p5, p6=p6)
 
@@ -115,6 +121,10 @@ fit_selectivity_24 = function(object, FUN, ...) {
 
 .doubleNorm24_fit = function(par, x, y, FUN) {
   FUN = match.fun(FUN)
+  removeZero = !is.finite(FUN(1,0))
+  if(removeZero) {
+    y = .tinyExp(y)
+  }
   fit = .doubleNorm24(x, par)
   out = sum(FUN(fit, y), na.rm=TRUE)
   return(out)
