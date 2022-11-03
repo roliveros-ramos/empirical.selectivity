@@ -84,6 +84,17 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
   if(is.null(years)) stop("Years (rows) must be provided")
   if(is.null(bins)) stop("Bin marks (columns) must be provided")
 
+  if(is.null(model)) {
+    model = list()
+    model$x = bins
+    model$y = matrix(NA_real_, nrow=length(years), ncol=length(bins))
+    model$years = years
+  } else {
+    if(!is.list(model)) stop("Model must be a list.")
+    if(!(c("x", "y", "years") %in% names(model)))
+      stop("Model selectivity must include components 'x', 'y' and 'years'.")
+  }
+
   out = object
   colnames(out) = bins
   rownames(out) = years
@@ -169,7 +180,7 @@ empirical_selectivity.matrix = function(object, fleet=NULL, sex=1, by="length",
 
   by = match.arg(by, choices = c("length", "age", "gsize"))
 
-  if(by=="gsize") return(NULL)
+  # if(by=="gsize") return(NULL)
 
   code = switch (by,
     length = "len",
