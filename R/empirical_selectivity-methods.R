@@ -106,10 +106,12 @@ weighted.mean.list = function(x, w, ...) {
   attr(out, "by") = attList$by
   attr(out, "fleet") = attList$fleet
 
-  attList$model$y = attList$model$y[i, ]
-  attList$model$years = attList$model$years[i]
+  if(!is.null(attList$model)) {
+    if(!is.null(attList$model[["y", exact=TRUE]])) attList$model$y = attList$model$y[i, ]
+    if(!is.null(attList$model[["years", exact=TRUE]])) attList$model$years = attList$model$years[i]
+    attr(out, "model") = attList$model
+  }
 
-  attr(out, "model") = attList$model
   if(!is.null(attList$weights)) attr(out, "weights") = attList$weights[i,]
 
   return(out)
@@ -134,7 +136,7 @@ split.empirical_selectivity = function (x, f, breaks, drop = FALSE, sep = ".",
     if(is.null(attr(x, "weights")))
       stop("No time dimension available for computing blocks.")
     yr = attr(x, "weights")$year
-    f = cut(yr, breaks = breaks, right=FALSE, include.lowest = TRUE)
+    f = cut(yr, breaks = breaks, right=FALSE, include.lowest = TRUE, dig.lab=7)
   }
 
   if (is.list(f))
