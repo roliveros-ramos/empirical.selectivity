@@ -1,7 +1,7 @@
 Package: empirical.selectivity
 Type: Package
-Title: Empirical selectivity diagnostics for r4ss 
-Version: 0.1.5
+Title: Empirical selectivity fitting and diagnostics 
+Version: 0.1.6
 Author: Ricardo Oliveros-Ramos
 Maintainer: Ricardo Oliveros-Ramos <ricardo.oliveros@gmail.com>
 Description: Empirical selectivity diagnostic
